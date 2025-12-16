@@ -1,14 +1,110 @@
 @import "tailwindcss";
-
 @variant dark (&:where(.dark, .dark *));
 
-@layer base {
-  * {
-    border-color: theme('colors.gray.200');
+@theme {
+  --color-backgroundSecondary: var(--background-secondary);
+  --color-btnHoverText: var(--btn-hover-text);
+  --color-textPrimary: var(--text-primary);
+  --color-textLoop: var(--text-loop);
+  --color-primary: var(--primary);
+  --color-hoverPrimary: var(--hover-primary);
+  --color-borderPrimary: var(--border-primary);
+
+  --font-sans: var(--font-inter), inter;
+  --font-header: var(--font-Poppins), poppins;
+  --font-mono: var(--font-roboto-mono), roboto-mono;
+}
+
+.light {
+  --background: #f2f3f7;
+  --foreground: #140033;
+
+  --background-secondary: rgba(255, 255, 255, 1);
+
+  --text-primary: #0a0a0a;
+  --text-secondary: #475569;
+  --text-loop: #cbd3e2;
+
+  --primary: #1659e9;
+
+  --hover-primary: #f4f4f5;
+  --btn-hover-text: #f7f6ff;
+
+  --border-primary: #e7ebf3;
+}
+
+.dark {
+  --background: #0b0b0d;
+  --foreground: #f5f5fa;
+
+  --background-secondary: rgba(0, 0, 0, 1);
+
+  --text-primary: #f7f6ff;
+  --text-secondary: #e2e8f0;
+  --text-loop: #2d2a35;
+
+  --primary: #1659e9;
+
+  --hover-primary: #222125;
+  --btn-hover-text: #0a0a0a;
+
+  --border-primary: #141218;
+}
+
+html {
+  scrollbar-width: none;
+  scroll-behavior: smooth;
+}
+
+html::-webkit-scrollbar {
+  display: none;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  transition: color 0.3s ease;
+}
+
+html.light body::before {
+  animation: paintDiagonal 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+html:not(.light) body::before {
+  animation: unpaintDiagonal 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  background-color: var(--background);
+}
+
+@keyframes paintDiagonal {
+  0% {
+    clip-path: polygon(100% 0, 100% 0, 100% 0);
   }
-  
-  body {
-    background-color: theme('colors.white');
-    color: theme('colors.gray.900');
+  100% {
+    clip-path: polygon(100% 0, 100% 100%, 0 100%, 0 0);
   }
 }
+
+@keyframes unpaintDiagonal {
+  0% {
+    clip-path: polygon(100% 0, 100% 100%, 0 100%, 0 0);
+  }
+  100% {
+    clip-path: polygon(100% 0, 100% 0, 100% 0);
+  }
+}
+
+.no-visible-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.no-visible-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+

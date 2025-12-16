@@ -1,6 +1,0 @@
-@import "tailwindcss";
-@plugin "@tailwindcss/typography";
-
-@source "../../app/**/*.{js,ts,jsx,tsx}";
-
-@variant dark (&:where(.dark, .dark *));

@@ -1,56 +1,40 @@
-import type { Config } from "tailwindcss";
-
-const config: Config = {
-  darkMode: 'class',
-  content: [
-    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./app/**/*.{js,ts,jsx,tsx,mdx}",
-  ],
+const config = {
+  content: ["./app/**/*.{js,ts,jsx,tsx,mdx}"],
+  darkMode: "class",
   theme: {
     extend: {
-      colors: {
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
-        card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
-        },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
-        },
-        primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
-        },
-        secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
-        },
-        muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
-        },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
-        },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
-        },
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
+      fontFamily: {
+        sans: ["var(--font-inter)"],
+        heading: ["var(--font-poppins)"],
+        mono: ["var(--font-mono)"],
       },
-      borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+      colors: {
+        purple: {
+          50: "#E8EEFD",
+          100: "#D0DEFB",
+          200: "#A2BCF6",
+          300: "#739BF2",
+          400: "#447AEE",
+          500: "#1659E9",
+          600: "#1147BB",
+          700: "#0D358C",
+          800: "#09235D",
+          900: "#04122F",
+          950: "#030C21",
+        },
+        background: "var(--background)",
+        backgroundSecondary: "var(--background-secondary)",
+        foreground: "var(--foreground)",
+        primary: "var(--text-primary)",
+        textPrimary: "var(--text-primary)",
+        textLoop: "var(--text-loop)",
+        hoverPrimary: "var(--hover-primary)",
+        borderPrimary: "var(--border-primary)",
+        border: "var(--border)",
       },
     },
   },
   plugins: [],
 };
+
 export default config;

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Poppins, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 import ThemeProvider from "./_components/ThemeProvider";
+import { AuthProvider } from "@/context/AuthContext";
 
 const inter = Inter({
   weight: ["300", "400", "500", "600"],
@@ -45,7 +46,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <AuthProvider>
+            {children}
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

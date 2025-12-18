@@ -69,7 +69,7 @@ export function TestimonialCard({
       </div>
 
       <p className="text-neutral-600 dark:text-neutral-300 leading-relaxed">
-        "{testimonial}"
+        &quot;{testimonial}&quot;
       </p>
     </div>
   );

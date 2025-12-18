@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { useId, ComponentProps } from "react";
 import { MapPin, Users, GraduationCap, Search } from "lucide-react";
 
 import CountUp from "./CountUp";
@@ -96,7 +96,7 @@ export const Grid = ({
   );
 };
 
-export function GridPattern({ width, height, x, y, squares, ...props }: any) {
+export function GridPattern({ width, height, x, y, squares, ...props }: React.ComponentProps<"svg"> & { width?: number, height?: number, x?: string | number, y?: string | number, squares?: number[][] }) {
   const patternId = useId();
 
   return (
@@ -121,14 +121,14 @@ export function GridPattern({ width, height, x, y, squares, ...props }: any) {
       />
       {squares && (
         <svg x={x} y={y} className="overflow-visible">
-          {squares.map(([x, y]: any, idx: number) => (
+          {squares.map(([x, y]: number[], idx: number) => (
             <rect
               strokeWidth="0"
               key={`${x}-${y}-${idx}`}
-              width={width + 1}
-              height={height + 1}
-              x={x * width}
-              y={y * height}
+              width={Number(width) + 1}
+              height={Number(height) + 1}
+              x={x * Number(width)}
+              y={y * Number(height)}
             />
           ))}
         </svg>

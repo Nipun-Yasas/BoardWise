@@ -11,6 +11,7 @@ import { useTheme } from "next-themes";
 import { usePathname } from "next/navigation";
 import { Button } from "./Button";
 import { Menu, X } from "lucide-react";
+import Link from "next/link";
 
 const navItems = [
   { name: "Home", href: "/" },
@@ -70,11 +71,11 @@ export const Navigation = () => {
             isMobile
               ? { backgroundColor: "rgba(0, 0, 0, 0)", width: "95%" }
               : {
-                  width: isScrolled ? "fit-content" : "1000px",
-                  backgroundColor: isScrolled
-                    ? "var(--background-secondary)"
-                    : "rgba(0, 0, 0, 0)",
-                }
+                width: isScrolled ? "fit-content" : "1000px",
+                backgroundColor: isScrolled
+                  ? "var(--background-secondary)"
+                  : "rgba(0, 0, 0, 0)",
+              }
           }
           transition={{
             duration: 0.5,
@@ -82,12 +83,12 @@ export const Navigation = () => {
           }}
           className="relative max-screen bg-solid sm:backdrop-blur-md  pointer-events-auto flex w-full items-center justify-between gap-6 rounded-full px-4 py-1 transition-colors sm:px-6 sm:pr-4"
         >
-          <a
+          <Link
             className="font-clash-display text-xl text-textPrimary font-medium sm:text-xl"
             href="/"
           >
             BoardWise
-          </a>
+          </Link>
           <ul className="hidden font-light gap-6 text-sm sm:flex whitespace-nowrap px-16">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
@@ -104,9 +105,8 @@ export const Navigation = () => {
                     />
                   )}
                   <a
-                    className={`text-textPrimary ${
-                      isActive ? "font-semibold" : ""
-                    }`}
+                    className={`text-textPrimary ${isActive ? "font-semibold" : ""
+                      }`}
                     href={item.href}
                   >
                     <span className="relative inline-flex overflow-hidden">
@@ -272,11 +272,10 @@ export const Navigation = () => {
                     <a
                       href={item.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`block text-lg ${
-                        pathname === item.href
+                      className={`block text-lg ${pathname === item.href
                           ? "text-primary font-semibold"
                           : "text-textPrimary"
-                      }`}
+                        }`}
                     >
                       {item.name}
                     </a>

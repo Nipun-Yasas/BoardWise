@@ -46,9 +46,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider>
+          {/* <AuthProvider> */}
             {children}
-          </AuthProvider>
+         {/* </AuthProvider> */}
         </ThemeProvider>
       </body>
     </html>

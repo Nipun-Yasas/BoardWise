@@ -3,6 +3,7 @@ import { Inter, Poppins, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 import ThemeProvider from "./_components/ThemeProvider";
 import { AuthProvider } from "@/context/AuthContext";
+// import KeyboardNavigation from "./_components/KeyboardNavigation";
 
 const inter = Inter({
   weight: ["300", "400", "500", "600"],
@@ -46,9 +47,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {/* <AuthProvider> */}
+          <AuthProvider>
             {children}
-         {/* </AuthProvider> */}
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

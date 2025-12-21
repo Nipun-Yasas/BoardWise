@@ -18,13 +18,13 @@ export default function AuthContainer() {
   }, []);
 
   return (
-    <div className="flex h-screen w-full bg-white dark:bg-neutral-950 overflow-hidden relative">
-      {/* Form Container */}
+    <div className="min-h-screen w-full bg-white dark:bg-neutral-950 flex flex-col lg:flex-row relative">
+      {/* Form Container - Scrolls with page */}
       <div
-        className={`absolute top-0 h-full w-full lg:w-1/2 transition-all duration-700 ease-in-out z-10 bg-white dark:bg-neutral-950 flex items-center justify-center p-8 lg:p-16 ${isSignup ? 'left-0 lg:left-1/2' : 'left-0'
+        className={`w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-16 bg-white dark:bg-neutral-950 transition-transform duration-700 ease-in-out z-10 ${isSignup ? 'lg:translate-x-full' : 'lg:translate-x-0'
           }`}
       >
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-md my-auto">
           {/* We use opacity/display to swap forms smoothly */}
           <div className={`${isSignup ? 'block animate-fadeIn' : 'hidden'}`}>
             <Register onSwitchToLogin={() => setIsSignup(false)} />
@@ -35,9 +35,9 @@ export default function AuthContainer() {
         </div>
       </div>
 
-      {/* Character/Overlay Container */}
+      {/* Character/Overlay Container - Sticky */}
       <div
-        className={`hidden lg:flex absolute top-0 h-full w-1/2 transition-all duration-700 ease-in-out z-20 bg-slate-50 dark:bg-neutral-900 items-center justify-center overflow-hidden flex-col ${isSignup ? 'left-0' : 'left-1/2'
+        className={`hidden lg:flex w-1/2 sticky top-0 h-screen bg-slate-50 dark:bg-neutral-900 items-center justify-center overflow-hidden flex-col transition-transform duration-700 ease-in-out z-20 ${isSignup ? 'lg:-translate-x-full' : 'lg:translate-x-0'
           }`}
       >
         {/* Background Grid/Pattern */}

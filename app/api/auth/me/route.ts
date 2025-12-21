@@ -1,33 +1,34 @@
-// import { NextResponse } from "next/server";
-// import prisma from "@/lib/prisma";
-// import { getSession } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import connectDB from "@/lib/db";
+import User from "@/models/User";
+import { getSession } from "@/lib/auth";
 
-// export async function GET() {
-//   try {
-//     const session = await getSession();
+export async function GET() {
+  await connectDB();
+  try {
+    const session = await getSession();
 
-//     if (!session || !session.userId) {
-//       return NextResponse.json({ user: null });
-//     }
+    if (!session || !session.userId) {
+      return NextResponse.json({ user: null });
+    }
 
-//     const user = await prisma.user.findUnique({
-//       where: { id: session.userId as string },
-//       select: {
-//         id: true,
-//         name: true,
-//         email: true,
-//         role: true,
-//       },
-//     });
+    const user = await User.findById(session.userId).select("name email role");
 
-//     if (!user) {
-//       return NextResponse.json({ user: null });
-//     }
+    if (!user) {
+      return NextResponse.json({ user: null });
+    }
 
-//     return NextResponse.json({ user });
-//   } catch (error) {
-//     console.error("Session check error:", error);
-//     return NextResponse.json({ user: null }, { status: 500 });
-//   }
-// }
+    return NextResponse.json({
+      user: {
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error("Session check error:", error);
+    return NextResponse.json({ user: null }, { status: 500 });
+  }
+}
 export {};

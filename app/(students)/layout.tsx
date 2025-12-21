@@ -2,21 +2,28 @@
 import React, { useState } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "../_components/Sidebar";
 import { ThemeToggle } from "../_components/ThemeToggle";
-import {
-  IconArrowLeft,
-  IconBrandTabler,
-  IconSettings,
-  IconUserBolt,
-} from "@tabler/icons-react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, UserPen, HousePlus } from "lucide-react";
+import {
+  LayoutDashboard,
+  UserPen,
+  HousePlus,
+  User,
+  ArrowLeft,
+} from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import Image from "next/image";
 
 export default function StudentLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { user, logout } = useAuth();
+  const handleLogout = async () => {
+    await logout();
+  };
+
   const links = [
     {
       label: "Dashboard",
@@ -41,10 +48,11 @@ export default function StudentLayout({
     },
     {
       label: "Logout",
-      href: "#",
+      href: "",
       icon: (
-        <IconArrowLeft className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />
+        <ArrowLeft className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />
       ),
+      onClick: handleLogout,
     },
   ];
   const [open, setOpen] = useState(false);
@@ -61,23 +69,25 @@ export default function StudentLayout({
             {open ? <Logo /> : <LogoIcon />}
             <div className="mt-8 flex flex-col gap-2">
               {links.map((link, idx) => (
-                <SidebarLink key={idx} link={link} />
+                <SidebarLink key={idx} link={link} onClick={link.onClick} />
               ))}
             </div>
           </div>
           <div>
             <SidebarLink
               link={{
-                label: "Manu Arora",
-                href: "#",
-                icon: (
-                  <img
-                    src="https://assets.aceternity.com/manu.png"
-                    className="h-7 w-7 shrink-0 rounded-full"
+                label: user?.name || "User",
+                href: "/profile",
+                icon: user?.image ? (
+                  <Image
+                    src={user.image}
+                    className="h-7 w-7 shrink-0 rounded-full object-cover"
                     width={50}
                     height={50}
                     alt="Avatar"
                   />
+                ) : (
+                  <User className="h-7 w-7 shrink-0 text-neutral-700 dark:text-neutral-200" />
                 ),
               }}
             />

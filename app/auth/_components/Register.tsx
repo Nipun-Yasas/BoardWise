@@ -7,6 +7,7 @@ import {
   Mail,
   Lock,
   User,
+  Phone,
   Eye as EyeIcon,
   EyeOff,
   AlertCircle,
@@ -25,6 +26,7 @@ export default function Register({ onSwitchToLogin }: RegisterProps) {
     initialValues: {
       name: "",
       email: "",
+      mobile_number: "",
       password: "",
       confirmPassword: "",
       role: "",
@@ -34,6 +36,10 @@ export default function Register({ onSwitchToLogin }: RegisterProps) {
         .max(50, "Must be 50 characters or less")
         .required("Required"),
       email: Yup.string().email("Invalid email address").required("Required"),
+      mobile_number: Yup.string()
+        .matches(/^[0-9]+$/, "Must be only digits")
+        .min(10, "Must be at least 10 digits")
+        .required("Required"),
       role: Yup.string().required("Required"),
       password: Yup.string()
         .min(8, "Must be at least 8 characters")
@@ -124,6 +130,32 @@ export default function Register({ onSwitchToLogin }: RegisterProps) {
               </div>
             ) : null}
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-textSecondary mb-1.5">
+              Mobile Number
+            </label>
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-textSecondary group-focus-within:text-primary transition-colors">
+                <Phone className="h-5 w-5" />
+              </div>
+              <input
+                type="text"
+                {...formik.getFieldProps("mobile_number")}
+                className={`block w-full pl-10 pr-3 py-3 border rounded-xl bg-backgroundSecondary text-textPrimary placeholder-textSecondary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all ${formik.touched.mobile_number && formik.errors.mobile_number
+                  ? "border-red-500"
+                  : "border-borderPrimary"
+                  }`}
+                placeholder="+1234567890"
+              />
+            </div>
+            {formik.touched.mobile_number && formik.errors.mobile_number ? (
+              <div className="text-red-500 text-xs mt-1">
+                {formik.errors.mobile_number}
+              </div>
+            ) : null}
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-textSecondary mb-1.5">
               Role (Student/Owner)

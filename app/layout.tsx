@@ -3,7 +3,6 @@ import { Inter, Poppins, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 import ThemeProvider from "./_components/ThemeProvider";
 import { AuthProvider } from "@/context/AuthContext";
-// import KeyboardNavigation from "./_components/KeyboardNavigation";
 
 const inter = Inter({
   weight: ["300", "400", "500", "600"],

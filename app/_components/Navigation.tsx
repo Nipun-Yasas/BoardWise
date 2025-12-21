@@ -13,6 +13,7 @@ import { Button } from "./Button";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { ThemeToggle } from "./ThemeToggle";
+import router from "next/router";
 
 const navItems = [
   { name: "Home", href: "/" },
@@ -126,8 +127,8 @@ export const Navigation = () => {
 
           <div className="flex items-center justify-center gap-4">
             <div className="hidden sm:flex gap-4">
-              <button>Login</button>
-              <button>Register</button>
+              <button onClick={()=>router.push('/auth/')}>Login</button>
+              <button onClick={()=>router.push('/auth/')}>Register</button>
             </div>
             <ThemeToggle />
             <button

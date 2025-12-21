@@ -48,7 +48,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { data } = await axiosInstance.post(API_PATHS.AUTH.LOGIN, formData);
         if (data.success) {
             setUser(data.user);
-            router.push('/dashboard');
+            if (data.user.role === "Student") {
+                router.push('/student-dashboard');
+            } else if (data.user.role === "Owner") {
+                router.push('/owner-dashboard');
+            }
         }
     };
 
@@ -56,7 +60,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { data } = await axiosInstance.post(API_PATHS.AUTH.REGISTER, formData);
         if (data.success) {
             setUser(data.user);
-            router.push('/dashboard');
+            if (data.user.role === "Student") {
+                router.push('/student-dashboard');
+            } else if (data.user.role === "Owner") {
+                router.push('/owner-dashboard');
+            }
         }
     };
 
@@ -71,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     useEffect(() => {
-        if (!loading && !user && pathname.startsWith('/dashboard')) {
+        if (!loading && !user && (pathname.startsWith('/student-dashboard') || pathname.startsWith('/owner-dashboard'))) {
             router.push('/auth');
         }
     }, [user, loading, pathname, router]);

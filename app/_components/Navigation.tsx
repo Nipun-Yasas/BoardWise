@@ -8,12 +8,11 @@ import {
   AnimatePresence,
 } from "motion/react";
 import { useTheme } from "next-themes";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Button } from "./Button";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { ThemeToggle } from "./ThemeToggle";
-import router from "next/router";
 
 const navItems = [
   { name: "Home", href: "/" },
@@ -22,6 +21,7 @@ const navItems = [
 
 export const Navigation = () => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const router = useRouter(); // Initialize router
   const { scrollY } = useScroll();
   const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -127,8 +127,8 @@ export const Navigation = () => {
 
           <div className="flex items-center justify-center gap-4">
             <div className="hidden sm:flex gap-4">
-              <button onClick={()=>router.push('/auth/')}>Login</button>
-              <button onClick={()=>router.push('/auth/')}>Register</button>
+              <button onClick={() => router.push('/auth')}>Login</button>
+              <button onClick={() => router.push('/auth')}>Register</button>
             </div>
             <ThemeToggle />
             <button

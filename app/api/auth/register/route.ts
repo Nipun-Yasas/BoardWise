@@ -4,8 +4,9 @@ import User from "@/models/User";
 import { hashPassword, createSession } from "@/lib/auth";
 
 export async function POST(request: Request) {
-  await connectDB();
   try {
+    await connectDB();
+    
     const body = await request.json();
     const { name, email, password, mobile_number, role } = body;
 
@@ -46,10 +47,15 @@ export async function POST(request: Request) {
         role: user.role,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Registration error:", error);
+    console.error("Error details:", error.message);
+    console.error("Error stack:", error.stack);
     return NextResponse.json(
-      { error: "An unexpected error occurred" },
+      { 
+        error: "An unexpected error occurred",
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined 
+      },
       { status: 500 }
     );
   }

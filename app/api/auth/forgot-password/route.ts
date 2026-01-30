@@ -1,0 +1,112 @@
+import { NextRequest, NextResponse } from "next/server";
+import connectDB from "@/lib/db";
+import User from "@/models/User";
+import PasswordReset from "@/models/PasswordReset";
+import crypto from "crypto";
+import nodemailer from "nodemailer";
+
+export async function POST(req: NextRequest) {
+  try {
+    await connectDB();
+    const { email } = await req.json();
+
+    console.log("Reset request for email:", email);
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      console.log("User not found");
+      return NextResponse.json(
+        { message: "If email exists, reset link will be sent" },
+        { status: 200 }
+      );
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+
+    console.log("Generated token, saving to database...");
+
+    // Save token to database
+    await PasswordReset.create({
+      userId: user._id,
+      token: hashedToken,
+      expiresAt: new Date(Date.now() + 3600000), // 1 hour
+    });
+
+    console.log("Token saved successfully");
+
+    // Create reset URL
+    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${resetToken}`;
+
+    console.log("Reset URL:", resetUrl);
+
+    // Check if email credentials exist
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+      console.warn("Email credentials not configured");
+      return NextResponse.json(
+        { 
+          message: "Reset token created. Email configuration pending.",
+          resetUrl: resetUrl // Remove this in production!
+        },
+        { status: 200 }
+      );
+    }
+
+    try {
+      // Send email (configure nodemailer)
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASSWORD,
+        },
+      });
+
+      await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: "Password Reset Request - BoardWise",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #333;">Password Reset Request</h1>
+            <p>You requested to reset your password for BoardWise.</p>
+            <p>Click the link below to reset your password:</p>
+            <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; margin: 16px 0;">
+              Reset Password
+            </a>
+            <p>Or copy and paste this link into your browser:</p>
+            <p style="color: #666; word-break: break-all;">${resetUrl}</p>
+            <p style="color: #999; font-size: 14px;">This link expires in 1 hour.</p>
+            <p style="color: #999; font-size: 14px;">If you didn't request this, please ignore this email.</p>
+          </div>
+        `,
+      });
+
+      console.log("Email sent successfully");
+    } catch (emailError: any) {
+      console.error("Email sending failed:", emailError.message);
+      // Still return success but log the error
+      return NextResponse.json(
+        { 
+          message: "Reset token created but email failed to send. Check console.",
+          resetUrl: resetUrl // Remove this in production!
+        },
+        { status: 200 }
+      );
+    }
+
+    return NextResponse.json(
+      { message: "Reset link sent to email" },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    console.error("Forgot password error:", error);
+    return NextResponse.json(
+      { error: "Failed to process request", details: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+export {};

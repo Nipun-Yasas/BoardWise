@@ -5,6 +5,7 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Mail, Lock, Eye as EyeIcon, EyeOff, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 interface LoginProps {
   onSwitchToSignup: () => void;
@@ -14,6 +15,7 @@ export default function Login({ onSwitchToSignup }: LoginProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const { login } = useAuth();
+  const router = useRouter();
 
   const formik = useFormik({
     initialValues: {
@@ -125,10 +127,10 @@ export default function Login({ onSwitchToSignup }: LoginProps) {
           </label>
           <button
             type="button"
-            onClick={onSwitchToSignup}
+            onClick={() => router.push('/forgot-password')}
             className="font-medium text-primary hover:text-primary/80 transition-colors"
           >
-            Don&apos;t have an account? Sign up
+             Forgot password?
           </button>
         </div>
 
@@ -139,6 +141,17 @@ export default function Login({ onSwitchToSignup }: LoginProps) {
         >
           {formik.isSubmitting ? 'Signing in...' : 'Sign in'}
         </button>
+
+        <div className="text-center text-sm text-textSecondary">
+          Don&apos;t have an account?{' '}
+          <button
+            type="button"
+            onClick={onSwitchToSignup}
+            className="font-medium text-primary hover:text-primary/80 transition-colors"
+          >
+            Sign up
+          </button>
+        </div>
 
 
       </form>

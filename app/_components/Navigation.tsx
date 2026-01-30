@@ -1,17 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Menu, X } from "lucide-react";
 import {
-  motion,
-  useScroll,
-  useMotionValueEvent,
   AnimatePresence,
+  motion,
+  useMotionValueEvent,
+  useScroll,
 } from "motion/react";
 import { useTheme } from "next-themes";
-import { usePathname, useRouter } from "next/navigation";
-import { Button } from "./Button";
-import { Menu, X } from "lucide-react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Button } from "./Button";
 import { ThemeToggle } from "./ThemeToggle";
 
 const navItems = [
@@ -73,11 +73,11 @@ export const Navigation = () => {
             isMobile
               ? { backgroundColor: "rgba(0, 0, 0, 0)", width: "95%" }
               : {
-                width: isScrolled ? "fit-content" : "1000px",
-                backgroundColor: isScrolled
-                  ? "var(--background-secondary)"
-                  : "rgba(0, 0, 0, 0)",
-              }
+                  width: isScrolled ? "fit-content" : "1000px",
+                  backgroundColor: isScrolled
+                    ? "var(--background-secondary)"
+                    : "rgba(0, 0, 0, 0)",
+                }
           }
           transition={{
             duration: 0.5,
@@ -107,8 +107,9 @@ export const Navigation = () => {
                     />
                   )}
                   <a
-                    className={`text-textPrimary ${isActive ? "font-semibold" : ""
-                      }`}
+                    className={`text-textPrimary ${
+                      isActive ? "font-semibold" : ""
+                    }`}
                     href={item.href}
                   >
                     <span className="relative inline-flex overflow-hidden">
@@ -127,8 +128,8 @@ export const Navigation = () => {
 
           <div className="flex items-center justify-center gap-4">
             <div className="hidden sm:flex gap-4">
-              <Button onClick={() => router.push('/auth')}>Login</Button>
-              <Button onClick={() => router.push('/auth')}>Register</Button>
+              <Button onClick={() => router.push("/auth")}>Login</Button>
+              <Button onClick={() => router.push("/auth")}>Register</Button>
             </div>
             <ThemeToggle />
             <button
@@ -176,10 +177,11 @@ export const Navigation = () => {
                     <a
                       href={item.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`block text-lg ${pathname === item.href
-                        ? "text-primary font-semibold"
-                        : "text-textPrimary"
-                        }`}
+                      className={`block text-lg ${
+                        pathname === item.href
+                          ? "text-primary font-semibold"
+                          : "text-textPrimary"
+                      }`}
                     >
                       {item.name}
                     </a>

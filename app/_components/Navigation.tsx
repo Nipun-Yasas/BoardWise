@@ -127,8 +127,8 @@ export const Navigation = () => {
 
           <div className="flex items-center justify-center gap-4">
             <div className="hidden sm:flex gap-4">
-              <button onClick={() => router.push('/auth')}>Login</button>
-              <button onClick={() => router.push('/auth')}>Register</button>
+              <Button onClick={() => router.push('/auth')}>Login</Button>
+              <Button onClick={() => router.push('/auth')}>Register</Button>
             </div>
             <ThemeToggle />
             <button

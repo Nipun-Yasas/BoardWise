@@ -3,6 +3,7 @@ import { Inter, Poppins, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 import ThemeProvider from "./_components/ThemeProvider";
 import { AuthProvider } from "@/context/AuthContext";
+import { Suspense } from "react";
 
 const inter = Inter({
   weight: ["300", "400", "500", "600"],
@@ -39,7 +40,8 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${inter.variable} ${poppins.variable} ${robotoMono.variable}`}
     >
-      <body className="antialiased">
+      <body className="antialiased" >
+        <Suspense fallback={<p>Loading...</p>}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -50,6 +52,7 @@ export default function RootLayout({
             {children}
           </AuthProvider>
         </ThemeProvider>
+        </Suspense>
       </body>
     </html>
   );

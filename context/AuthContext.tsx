@@ -72,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
             await axiosInstance.post(API_PATHS.AUTH.LOGOUT);
             setUser(null);
-            router.push('/auth');
+            router.push('/');
         } catch (error) {
             console.error('Logout failed', error);
         }

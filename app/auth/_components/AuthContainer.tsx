@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 import Login from './Login';
 import Register from './Register';
 import { Boxy, Roundy, Spiky } from './Characters';
@@ -19,6 +21,13 @@ export default function AuthContainer() {
 
   return (
     <div className="min-h-screen w-full bg-white dark:bg-neutral-950 flex flex-col lg:flex-row relative">
+      <Link
+        href="/"
+        className="absolute top-4 left-4 z-50 flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 transition-colors bg-white/50 rounded-lg hover:text-slate-900 hover:bg-white/80 dark:text-slate-400 dark:hover:text-white dark:bg-black/50 dark:hover:bg-black/80 backdrop-blur-sm"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Back to Home
+      </Link>
       {/* Form Container - Scrolls with page */}
       <div
         className={`w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-16 bg-white dark:bg-neutral-950 transition-transform duration-700 ease-in-out z-10 ${isSignup ? 'lg:translate-x-full' : 'lg:translate-x-0'

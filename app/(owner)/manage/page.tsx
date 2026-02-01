@@ -1,179 +1,675 @@
 "use client";
 
-import React, { useState } from "react";
-import { Home, Box, CreditCard } from "lucide-react";
+import BillingTab from "@/app/_components/manage/BillingTab";
 import GeneralInfoTab from "@/app/_components/manage/GeneralInfoTab";
 import RoomsTab from "@/app/_components/manage/RoomsTab";
-import BillingTab from "@/app/_components/manage/BillingTab";
-
-interface Room {
-  id: string;
-  name: string;
-  capacity: number;
-  price: number;
-  description: string;
-  images: string[];
-}
+import axiosInstance, { API_PATHS } from "@/lib/axios";
+import { Box, CreditCard, Home } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface BillType {
   id: string;
   name: string;
 }
 
-interface MonthlyBill {
+interface Room {
+  id: string;
+  boardingId: string;
+  name: string;
+  capacity: number;
+  price: number;
+  description: string;
+  images: string[];
+  billTypes: BillType[];
+}
+
+interface Boarding {
+  id: string;
+  name: string;
+  description: string;
+  mainImage: string | null;
+  totalRooms?: number;
+  rooms: Room[];
+}
+
+interface RoomBill {
+  roomId: string;
   month: string;
   bills: Record<string, number>;
   dueDate: string;
 }
 
 export default function Manage() {
+  const idCounterRef = React.useRef(1);
+  const getNextId = () => String(idCounterRef.current++);
+
   const [activeTab, setActiveTab] = useState<"general" | "rooms" | "billing">(
-    "general"
+    "general",
   );
 
-  const [generalInfo, setGeneralInfo] = useState({
-    name: "My Awesome Boarding",
-    description: "A comfortable place for students.",
-    mainImage: null as string | null,
-  });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [savingRoomId, setSavingRoomId] = useState<string | null>(null);
 
-  const [rooms, setRooms] = useState<Room[]>([
-    {
-      id: "1",
-      name: "Room 101",
-      capacity: 2,
-      price: 15000,
-      description: "Shared room with balcony",
-      images: [],
-    },
-  ]);
-
-  const totalCapacity = rooms.reduce(
-    (sum, room) => sum + (room.capacity || 0),
-    0
-  );
-  const [billTypes, setBillTypes] = useState<BillType[]>([
-    { id: "1", name: "Electricity" },
-    { id: "2", name: "Water" },
-  ]);
+  const [boardings, setBoardings] = useState<Boarding[]>([]);
+  const [selectedBoardingId, setSelectedBoardingId] = useState<string>("");
+  const selectedBoarding = boardings.find((b) => b.id === selectedBoardingId);
 
   const [selectedMonth, setSelectedMonth] = useState(
-    new Date().toISOString().slice(0, 7)
+    new Date().toISOString().slice(0, 7),
   );
-  const [monthlyBills, setMonthlyBills] = useState<Record<string, MonthlyBill>>(
-    {}
-  );
+  const [roomBills, setRoomBills] = useState<RoomBill[]>([]);
 
-  const handleGeneralChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setGeneralInfo((prev) => ({ ...prev, [name]: value }));
+  const totalCapacity =
+    selectedBoarding?.rooms?.reduce(
+      (sum, room) => sum + (room.capacity || 0),
+      0,
+    ) || 0;
+
+  // Fetch boardings on mount
+  useEffect(() => {
+    fetchBoardings();
+  }, []);
+
+  // Fetch monthly bills when boarding or month changes
+  useEffect(() => {
+    if (selectedBoardingId && !selectedBoardingId.startsWith("temp-")) {
+      fetchMonthlyBills();
+    }
+  }, [selectedBoardingId, selectedMonth]);
+
+  const fetchBoardings = async () => {
+    try {
+      setLoading(true);
+      const response = await axiosInstance.get(API_PATHS.BOARDING.GET_ALL);
+      const fetchedBoardings = response.data;
+
+      if (fetchedBoardings.length > 0) {
+        // Ensure all rooms have bill types array initialized
+        const boardingsWithBillTypes = fetchedBoardings.map(
+          (boarding: Boarding) => ({
+            ...boarding,
+            rooms: boarding.rooms.map((room: Room) => ({
+              ...room,
+              billTypes: room.billTypes || [],
+            })),
+          }),
+        );
+
+        setBoardings(boardingsWithBillTypes);
+        setSelectedBoardingId(boardingsWithBillTypes[0].id);
+      } else {
+        // No boardings yet, create empty state
+        setBoardings([]);
+        setSelectedBoardingId("");
+      }
+    } catch (error: any) {
+      console.error("Error fetching boardings:", error);
+      toast.error("Failed to load boardings");
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const fetchMonthlyBills = async () => {
+    if (!selectedBoardingId || selectedBoardingId.startsWith("temp-")) return;
+
+    try {
+      const response = await axiosInstance.get(
+        API_PATHS.MONTHLY_BILL.GET_ALL(selectedBoardingId, selectedMonth),
+      );
+
+      const fetchedBills = response.data;
+      setRoomBills(fetchedBills);
+    } catch (error: any) {
+      console.error("Error fetching monthly bills:", error);
+      // Don't show error toast for empty results
+      if (error.response?.status !== 404) {
+        console.log("No bills found for this month");
+      }
+    }
+  };
+
+  // Add new boarding (creates temporary local boarding)
+  const addBoarding = () => {
+    const tempId = `temp-${getNextId()}`;
+    const newBoarding: Boarding = {
+      id: tempId,
+      name: "",
+      description: "",
+      mainImage: null,
+      totalRooms: 0,
+      rooms: [],
+    };
+    setBoardings([...boardings, newBoarding]);
+    setSelectedBoardingId(tempId);
+  };
+  // Save boarding details
+  const saveBoardingDetails = async () => {
+    if (!selectedBoarding) return;
+
+    // Validate required fields
+    if (!selectedBoarding.name.trim()) {
+      toast.error("Boarding name is required");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const isNewBoarding = selectedBoarding.id?.startsWith("temp-");
+
+      if (isNewBoarding) {
+        // Create new boarding
+        const response = await axiosInstance.post(API_PATHS.BOARDING.CREATE, {
+          name: selectedBoarding.name,
+          description: selectedBoarding.description,
+          mainImage: selectedBoarding.mainImage,
+          totalRooms: selectedBoarding.totalRooms || 0,
+        });
+
+        // Extract boarding from nested response
+        const createdBoarding = response.data.boarding || response.data;
+        console.log("Created boarding:", createdBoarding);
+
+        // Ensure the created boarding has a rooms array
+        if (!createdBoarding.rooms) {
+          createdBoarding.rooms = [];
+        }
+
+        // Replace temporary boarding with the real one from the server
+        const updatedBoardings = boardings.map((b) =>
+          b.id === selectedBoarding.id ? createdBoarding : b,
+        );
+
+        console.log("Updated boardings:", updatedBoardings);
+        setBoardings(updatedBoardings);
+        setSelectedBoardingId(createdBoarding.id);
+        toast.success("Boarding created successfully!");
+      } else {
+        // Update existing boarding
+        await axiosInstance.put(
+          API_PATHS.BOARDING.UPDATE(selectedBoarding.id),
+          {
+            name: selectedBoarding.name,
+            description: selectedBoarding.description,
+            mainImage: selectedBoarding.mainImage,
+            totalRooms: selectedBoarding.totalRooms || 0,
+          },
+        );
+
+        // Update the boarding in the local state
+        setBoardings(
+          boardings.map((b) =>
+            b.id === selectedBoarding.id
+              ? {
+                  ...b,
+                  name: selectedBoarding.name,
+                  description: selectedBoarding.description,
+                  mainImage: selectedBoarding.mainImage,
+                  totalRooms: selectedBoarding.totalRooms,
+                }
+              : b,
+          ),
+        );
+        toast.success("Boarding details saved!");
+      }
+    } catch (error: any) {
+      console.error("Error saving boarding:", error);
+      toast.error(
+        selectedBoarding.id?.startsWith("temp-")
+          ? "Failed to create boarding"
+          : "Failed to save boarding details",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Update boarding general info (local state)
+  const updateBoardingInfo = async (field: keyof Boarding, value: any) => {
+    // Update local state first
+    setBoardings(
+      boardings.map((b) =>
+        b.id === selectedBoardingId ? { ...b, [field]: value } : b,
+      ),
+    );
+
+    // Auto-save mainImage deletion for existing boardings
+    if (
+      field === "mainImage" &&
+      value === null &&
+      selectedBoardingId &&
+      !selectedBoardingId.startsWith("temp-")
+    ) {
+      try {
+        const currentBoarding = boardings.find(
+          (b) => b.id === selectedBoardingId,
+        );
+        if (currentBoarding) {
+          await axiosInstance.put(
+            API_PATHS.BOARDING.UPDATE(selectedBoardingId),
+            {
+              name: currentBoarding.name,
+              description: currentBoarding.description,
+              mainImage: null,
+              totalRooms: currentBoarding.totalRooms || 0,
+            },
+          );
+          toast.success("Image removed successfully!");
+        }
+      } catch (error: any) {
+        console.error("Error removing image:", error);
+        toast.error("Failed to remove image");
+        // Revert the change on error
+        const currentBoarding = boardings.find(
+          (b) => b.id === selectedBoardingId,
+        );
+        if (currentBoarding) {
+          setBoardings(
+            boardings.map((b) =>
+              b.id === selectedBoardingId
+                ? { ...b, mainImage: currentBoarding.mainImage }
+                : b,
+            ),
+          );
+        }
+      }
+    }
+  };
+  const handleGeneralChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = e.target;
+    // Convert totalRooms to number
+    if (name === "totalRooms") {
+      updateBoardingInfo(name as keyof Boarding, parseInt(value) || 0);
+    } else {
+      updateBoardingInfo(name as keyof Boarding, value);
+    }
+  };
+
+  // Room management
   const addRoom = () => {
+    if (!selectedBoarding) return;
     const newRoom: Room = {
-      id: Date.now().toString(),
+      id: `temp-${getNextId()}`,
+      boardingId: selectedBoardingId,
       name: "",
       capacity: 1,
       price: 0,
       description: "",
       images: [],
+      billTypes: [
+        { id: `temp-${getNextId()}`, name: "Electricity" },
+        { id: `temp-${getNextId()}`, name: "Water" },
+      ],
     };
-    setRooms([...rooms, newRoom]);
+    updateBoardingInfo("rooms", [...selectedBoarding.rooms, newRoom]);
   };
 
-  const updateRoom = (id: string, field: keyof Room, value: any) => {
-    setRooms(
-      rooms.map((room) => (room.id === id ? { ...room, [field]: value } : room))
+  const updateRoom = (roomId: string, field: keyof Room, value: any) => {
+    if (!selectedBoarding) return;
+    const updatedRooms = selectedBoarding.rooms.map((room) =>
+      room.id === roomId ? { ...room, [field]: value } : room,
     );
+    updateBoardingInfo("rooms", updatedRooms);
   };
 
-  const removeRoom = (id: string) => {
-    setRooms(rooms.filter((room) => room.id !== id));
-  };
+  const removeRoom = async (roomId: string) => {
+    if (!selectedBoarding) return;
 
-  const addRoomImage = (roomId: string) => {
-    const mockImage = `https://picsum.photos/seed/${Date.now()}/200/200`;
-    const room = rooms.find((r) => r.id === roomId);
-    if (room) {
-      updateRoom(roomId, "images", [...room.images, mockImage]);
+    // Helper to check if ID is a valid MongoDB ObjectId
+    const isValidMongoId = (id: string) => /^[a-f\d]{24}$/i.test(id);
+
+    try {
+      // If it's a real room from the database, delete it
+      if (!roomId.startsWith("temp-") && isValidMongoId(roomId)) {
+        await axiosInstance.delete(API_PATHS.ROOM.DELETE(roomId));
+        toast.success("Room deleted successfully!");
+      }
+
+      // Update local state
+      updateBoardingInfo(
+        "rooms",
+        selectedBoarding.rooms.filter((r) => r.id !== roomId),
+      );
+      setRoomBills(roomBills.filter((bill) => bill.roomId !== roomId));
+
+      // Refresh boardings if it was a database room
+      if (!roomId.startsWith("temp-") && isValidMongoId(roomId)) {
+        await fetchBoardings();
+      }
+    } catch (error: any) {
+      console.error("Error deleting room:", error);
+      toast.error(error.response?.data?.error || "Failed to delete room");
     }
   };
 
-  const removeRoomImage = (roomId: string, imageIndex: number) => {
-    const room = rooms.find((r) => r.id === roomId);
+  const saveRooms = async () => {
+    if (!selectedBoarding) {
+      toast.error("Please select a boarding first");
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      // Helper to check if ID is a valid MongoDB ObjectId (24 char hex string)
+      const isValidMongoId = (id: string) => /^[a-f\d]{24}$/i.test(id);
+
+      // Separate new rooms from existing rooms
+      const newRooms = selectedBoarding.rooms.filter(
+        (room) => room.id.startsWith("temp-") || !isValidMongoId(room.id),
+      );
+      const existingRooms = selectedBoarding.rooms.filter(
+        (room) => !room.id.startsWith("temp-") && isValidMongoId(room.id),
+      );
+
+      if (newRooms.length === 0 && existingRooms.length === 0) {
+        toast.error("No rooms to save");
+        return;
+      }
+
+      // Create new rooms
+      for (const room of newRooms) {
+        await axiosInstance.post(API_PATHS.ROOM.CREATE, {
+          boardingId: selectedBoarding.id,
+          name: room.name,
+          capacity: room.capacity,
+          price: room.price,
+          description: room.description,
+          images: room.images,
+        });
+      }
+
+      // Update existing rooms
+      if (existingRooms.length > 0) {
+        await axiosInstance.put(API_PATHS.ROOM.UPDATE_BULK, {
+          rooms: existingRooms,
+        });
+      }
+
+      toast.success("Rooms saved successfully!");
+      // Refresh boardings to get updated room data
+      await fetchBoardings();
+    } catch (error: any) {
+      console.error("Error saving rooms:", error);
+      toast.error(error.response?.data?.error || "Failed to save rooms");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const addRoomImage = (roomId: string, file: File) => {
+    if (!selectedBoarding) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result as string;
+      const room = selectedBoarding.rooms.find((r) => r.id === roomId);
+      if (room) {
+        updateRoom(roomId, "images", [...room.images, base64String]);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeRoomImage = async (roomId: string, imageIndex: number) => {
+    if (!selectedBoarding) return;
+
+    // Helper to check if ID is a valid MongoDB ObjectId
+    const isValidMongoId = (id: string) => /^[a-f\d]{24}$/i.test(id);
+
+    const room = selectedBoarding.rooms.find((r) => r.id === roomId);
     if (room) {
       const newImages = [...room.images];
       newImages.splice(imageIndex, 1);
       updateRoom(roomId, "images", newImages);
+
+      // Auto-save if it's an existing room in the database
+      if (!roomId.startsWith("temp-") && isValidMongoId(roomId)) {
+        try {
+          await axiosInstance.patch(API_PATHS.ROOM.UPDATE(roomId), {
+            images: newImages,
+          });
+          toast.success("Image removed successfully!");
+        } catch (error: any) {
+          console.error("Error removing image:", error);
+          toast.error("Failed to remove image");
+          // Revert the change on error
+          updateRoom(roomId, "images", room.images);
+        }
+      }
     }
   };
 
-  const addBillType = (name: string) => {
-    if (!name) return;
-    setBillTypes([...billTypes, { id: Date.now().toString(), name }]);
+  const addRoomBillType = async (roomId: string, name: string) => {
+    if (!name || !selectedBoarding) return;
+
+    // Helper to check if ID is a valid MongoDB ObjectId
+    const isValidMongoId = (id: string) => /^[a-f\d]{24}$/i.test(id);
+
+    const room = selectedBoarding.rooms.find((r) => r.id === roomId);
+    if (room) {
+      // For existing rooms, save to database
+      if (!roomId.startsWith("temp-") && isValidMongoId(roomId)) {
+        try {
+          const response = await axiosInstance.post(
+            API_PATHS.BILL_TYPE.CREATE,
+            {
+              roomId,
+              name,
+            },
+          );
+
+          const newBillType: BillType = {
+            id: response.data.billType.id,
+            name: response.data.billType.name,
+          };
+
+          updateRoom(roomId, "billTypes", [...room.billTypes, newBillType]);
+          toast.success("Bill type added successfully!");
+        } catch (error: any) {
+          console.error("Error adding bill type:", error);
+          toast.error("Failed to add bill type");
+        }
+      } else {
+        // For temp rooms, just update local state
+        const newBillType: BillType = {
+          id: `temp-${getNextId()}`,
+          name,
+        };
+        updateRoom(roomId, "billTypes", [...room.billTypes, newBillType]);
+      }
+    }
   };
 
-  const removeBillType = (id: string) => {
-    setBillTypes(billTypes.filter((type) => type.id !== id));
+  const removeRoomBillType = async (roomId: string, billTypeId: string) => {
+    if (!selectedBoarding) return;
+
+    // Helper to check if ID is a valid MongoDB ObjectId
+    const isValidMongoId = (id: string) => /^[a-f\d]{24}$/i.test(id);
+
+    const room = selectedBoarding.rooms.find((r) => r.id === roomId);
+    if (room) {
+      // For existing bill types, delete from database
+      if (!billTypeId.startsWith("temp-") && isValidMongoId(billTypeId)) {
+        try {
+          await axiosInstance.delete(API_PATHS.BILL_TYPE.DELETE(billTypeId));
+          toast.success("Bill type removed successfully!");
+        } catch (error: any) {
+          console.error("Error removing bill type:", error);
+          toast.error("Failed to remove bill type");
+          return;
+        }
+      }
+
+      updateRoom(
+        roomId,
+        "billTypes",
+        room.billTypes.filter((type) => type.id !== billTypeId),
+      );
+
+      setRoomBills((prev) =>
+        prev.map((bill) => {
+          if (bill.roomId === roomId) {
+            const updatedBills = { ...bill.bills };
+            delete updatedBills[billTypeId];
+            return { ...bill, bills: updatedBills };
+          }
+          return bill;
+        }),
+      );
+    }
   };
 
-  const handleBillAmountChange = (billTypeId: string, amount: number) => {
-    setMonthlyBills((prev) => {
-      const currentMonthData = prev[selectedMonth] || {
-        month: selectedMonth,
-        bills: {},
-        dueDate: "",
-      };
-      return {
-        ...prev,
-        [selectedMonth]: {
-          ...currentMonthData,
+  const handleRoomBillAmountChange = (
+    roomId: string,
+    billTypeId: string,
+    amount: number,
+  ) => {
+    setRoomBills((prev) => {
+      const existingBillIndex = prev.findIndex(
+        (bill) => bill.roomId === roomId && bill.month === selectedMonth,
+      );
+
+      if (existingBillIndex >= 0) {
+        const updated = [...prev];
+        updated[existingBillIndex] = {
+          ...updated[existingBillIndex],
           bills: {
-            ...currentMonthData.bills,
+            ...updated[existingBillIndex].bills,
             [billTypeId]: amount,
           },
-        },
-      };
+        };
+        return updated;
+      } else {
+        return [
+          ...prev,
+          {
+            roomId,
+            month: selectedMonth,
+            bills: { [billTypeId]: amount },
+            dueDate: "",
+          },
+        ];
+      }
     });
   };
 
-  const handleDueDateChange = (date: string) => {
-    setMonthlyBills((prev) => {
-      const currentMonthData = prev[selectedMonth] || {
-        month: selectedMonth,
-        bills: {},
-        dueDate: "",
-      };
-      return {
-        ...prev,
-        [selectedMonth]: {
-          ...currentMonthData,
+  const handleRoomDueDateChange = (roomId: string, date: string) => {
+    setRoomBills((prev) => {
+      const existingBillIndex = prev.findIndex(
+        (bill) => bill.roomId === roomId && bill.month === selectedMonth,
+      );
+
+      if (existingBillIndex >= 0) {
+        const updated = [...prev];
+        updated[existingBillIndex] = {
+          ...updated[existingBillIndex],
           dueDate: date,
-        },
-      };
+        };
+        return updated;
+      } else {
+        return [
+          ...prev,
+          {
+            roomId,
+            month: selectedMonth,
+            bills: {},
+            dueDate: date,
+          },
+        ];
+      }
     });
+  };
+
+  const saveMonthlyBills = async (roomId?: string) => {
+    if (!selectedBoarding) {
+      toast.error("Please select a boarding first");
+      return;
+    }
+
+    try {
+      if (roomId) {
+        setSavingRoomId(roomId);
+      } else {
+        setSaving(true);
+      }
+
+      // Filter bills for specific room if roomId provided, otherwise all rooms
+      let billsToSave = roomBills.filter(
+        (bill) => bill.month === selectedMonth && bill.dueDate,
+      );
+
+      if (roomId) {
+        billsToSave = billsToSave.filter((bill) => bill.roomId === roomId);
+      }
+
+      if (billsToSave.length === 0) {
+        toast.error("Please set due dates for the bills");
+        return;
+      }
+
+      const response = await axiosInstance.post(API_PATHS.MONTHLY_BILL.SAVE, {
+        bills: billsToSave,
+      });
+
+      if (response.data.success) {
+        const roomName = roomId
+          ? selectedBoarding.rooms.find((r) => r.id === roomId)?.name || "room"
+          : "all rooms";
+        toast.success(`Bills saved for ${roomName}!`);
+        // Refresh monthly bills after saving
+        await fetchMonthlyBills();
+      }
+    } catch (error: any) {
+      console.error("Error saving monthly bills:", error);
+      toast.error(error.response?.data?.error || "Failed to save bills");
+    } finally {
+      setSaving(false);
+      setSavingRoomId(null);
+    }
   };
 
   const renderTabContent = () => {
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      );
+    }
+
     switch (activeTab) {
       case "general":
         return (
           <GeneralInfoTab
-            generalInfo={generalInfo}
-            setGeneralInfo={setGeneralInfo}
+            boardings={boardings}
+            selectedBoardingId={selectedBoardingId}
+            setSelectedBoardingId={setSelectedBoardingId}
+            selectedBoarding={selectedBoarding || null}
+            updateBoardingInfo={updateBoardingInfo}
             handleGeneralChange={handleGeneralChange}
             totalCapacity={totalCapacity}
+            addBoarding={addBoarding}
+            saveBoardingDetails={saveBoardingDetails}
+            saving={saving}
           />
         );
       case "rooms":
         return (
           <RoomsTab
-            rooms={rooms}
+            boardings={boardings}
+            selectedBoardingId={selectedBoardingId}
+            setSelectedBoardingId={setSelectedBoardingId}
+            rooms={selectedBoarding?.rooms || []}
             addRoom={addRoom}
             updateRoom={updateRoom}
             removeRoom={removeRoom}
+            saveRooms={saveRooms}
+            saving={saving}
             addRoomImage={addRoomImage}
             removeRoomImage={removeRoomImage}
           />
@@ -181,14 +677,16 @@ export default function Manage() {
       case "billing":
         return (
           <BillingTab
-            billTypes={billTypes}
-            addBillType={addBillType}
-            removeBillType={removeBillType}
-            monthlyBills={monthlyBills}
+            rooms={selectedBoarding?.rooms || []}
+            addRoomBillType={addRoomBillType}
+            removeRoomBillType={removeRoomBillType}
+            roomBills={roomBills}
             selectedMonth={selectedMonth}
             setSelectedMonth={setSelectedMonth}
-            handleBillAmountChange={handleBillAmountChange}
-            handleDueDateChange={handleDueDateChange}
+            handleRoomBillAmountChange={handleRoomBillAmountChange}
+            handleRoomDueDateChange={handleRoomDueDateChange}
+            saveMonthlyBills={saveMonthlyBills}
+            savingRoomId={savingRoomId}
           />
         );
       default:
@@ -201,14 +699,13 @@ export default function Manage() {
       <div className="max-w-6xl mx-auto space-y-8">
         <div>
           <h1 className="text-3xl font-bold text-textPrimary tracking-tight">
-            Manage Boarding
+            Manage Boardings
           </h1>
           <p className="text-textSecondary mt-2">
             Update your boarding details, manage rooms, and configure billing.
           </p>
         </div>
 
-        {/* Navigation Tabs */}
         <div className="flex gap-2 overflow-x-auto pb-2 border-b border-borderPrimary">
           {[
             { id: "general", label: "General Info", icon: <Home size={18} /> },
@@ -223,6 +720,7 @@ export default function Manage() {
                   ? "bg-backgroundSecondary text-primary"
                   : "text-textSecondary hover:text-textPrimary hover:bg-backgroundSecondary/50"
               }`}
+              suppressHydrationWarning
             >
               {tab.icon}
               {tab.label}

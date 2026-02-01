@@ -5,7 +5,18 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   icon?: React.ReactNode;
 }
 
-const Input: React.FC<InputProps> = ({ label, icon, className = "", ...props }) => {
+const Input: React.FC<InputProps> = ({
+  label,
+  icon,
+  className = "",
+  value,
+  type,
+  ...props
+}) => {
+  // For number inputs, allow empty string so users can clear the field
+  const inputValue =
+    type === "number" && (value === 0 || value === "0") ? "" : (value ?? "");
+
   return (
     <div>
       {label && (
@@ -16,6 +27,8 @@ const Input: React.FC<InputProps> = ({ label, icon, className = "", ...props }) 
       )}
       <input
         className={`w-full p-2 text-textSecondary border border-borderPrimary rounded-lg bg-input focus:ring-2 focus:ring-primary outline-none transition-colors ${className}`}
+        type={type}
+        value={inputValue}
         {...props}
       />
     </div>

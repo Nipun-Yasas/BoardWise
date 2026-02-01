@@ -164,7 +164,10 @@ const GeneralInfoTab: React.FC<GeneralInfoTabProps> = ({
                       if (file) {
                         const reader = new FileReader();
                         reader.onloadend = () => {
-                          updateBoardingInfo("mainImage", reader.result as string);
+                          updateBoardingInfo(
+                            "mainImage",
+                            reader.result as string,
+                          );
                         };
                         reader.readAsDataURL(file);
                         e.target.value = ""; // Reset input

@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
 // GET: Fetch single room
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   await connectDB();
   try {
@@ -45,13 +45,13 @@ export async function GET(
         images: room.images,
         isAvailable: room.isAvailable,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Fetch room error:", error);
     return NextResponse.json(
       { error: "Failed to fetch room" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -59,7 +59,7 @@ export async function GET(
 // PATCH: Update single room
 export async function PATCH(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   await connectDB();
   try {
@@ -111,13 +111,13 @@ export async function PATCH(
           isAvailable: updatedRoom.isAvailable,
         },
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Update room error:", error);
     return NextResponse.json(
       { error: "Failed to update room" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -125,7 +125,7 @@ export async function PATCH(
 // DELETE: Delete a room
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   await connectDB();
   try {
@@ -160,13 +160,13 @@ export async function DELETE(
 
     return NextResponse.json(
       { success: true, message: "Room deleted successfully" },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Delete room error:", error);
     return NextResponse.json(
       { error: "Failed to delete room" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

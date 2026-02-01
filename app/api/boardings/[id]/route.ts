@@ -24,7 +24,12 @@ export async function PUT(
     const body = await request.json();
     const { name, description, mainImage, totalRooms } = body;
 
-    console.log("Updating boarding:", id, "with data:", { name, description, mainImage, totalRooms });
+    console.log("Updating boarding:", id, "with data:", {
+      name,
+      description,
+      mainImage,
+      totalRooms,
+    });
     console.log("User ID:", session.userId);
 
     // Find and update boarding

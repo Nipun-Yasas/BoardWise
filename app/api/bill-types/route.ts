@@ -1,8 +1,8 @@
 import { getSession } from "@/lib/auth";
 import connectDB from "@/lib/db";
 import BillType from "@/models/BillType";
-import Room from "@/models/Room";
 import Boarding from "@/models/Boarding";
+import Room from "@/models/Room";
 import { NextResponse } from "next/server";
 
 // GET: Fetch all bill types for a room
@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     if (!roomId) {
       return NextResponse.json(
         { error: "Room ID is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -40,7 +40,9 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    const billTypes = await BillType.find({ roomId }).sort({ createdAt: 1 }).lean();
+    const billTypes = await BillType.find({ roomId })
+      .sort({ createdAt: 1 })
+      .lean();
 
     const formattedBillTypes = billTypes.map((bt) => ({
       id: bt._id.toString(),
@@ -52,7 +54,7 @@ export async function GET(request: Request) {
     console.error("Fetch bill types error:", error);
     return NextResponse.json(
       { error: "Failed to fetch bill types" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -75,7 +77,7 @@ export async function POST(request: Request) {
     if (!roomId || !name) {
       return NextResponse.json(
         { error: "Room ID and name are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -110,13 +112,13 @@ export async function POST(request: Request) {
           name: billType.name,
         },
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("Create bill type error:", error);
     return NextResponse.json(
       { error: "Failed to create bill type" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

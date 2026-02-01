@@ -1,8 +1,8 @@
 import { getSession } from "@/lib/auth";
 import connectDB from "@/lib/db";
+import BillType from "@/models/BillType";
 import Boarding from "@/models/Boarding";
 import Room from "@/models/Room";
-import BillType from "@/models/BillType";
 import { NextResponse } from "next/server";
 
 // GET: Fetch all rooms for a boarding
@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     if (!boardingId) {
       return NextResponse.json(
         { error: "Boarding ID is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -34,11 +34,13 @@ export async function GET(request: Request) {
     if (!boarding) {
       return NextResponse.json(
         { error: "Boarding not found or unauthorized" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
-    const rooms = await Room.find({ boardingId }).sort({ createdAt: -1 }).lean();
+    const rooms = await Room.find({ boardingId })
+      .sort({ createdAt: -1 })
+      .lean();
 
     const formattedRooms = rooms.map((room) => ({
       id: room._id.toString(),
@@ -56,7 +58,7 @@ export async function GET(request: Request) {
     console.error("Fetch rooms error:", error);
     return NextResponse.json(
       { error: "Failed to fetch rooms" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -92,7 +94,7 @@ export async function POST(request: Request) {
     if (!boarding) {
       return NextResponse.json(
         { error: "Boarding not found or unauthorized" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -140,13 +142,13 @@ export async function POST(request: Request) {
           billTypes: createdBillTypes,
         },
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("Create room error:", error);
     return NextResponse.json(
       { error: "Failed to create room" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -169,7 +171,7 @@ export async function PUT(request: Request) {
     if (!Array.isArray(rooms)) {
       return NextResponse.json(
         { error: "Invalid request format" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -199,7 +201,7 @@ export async function PUT(request: Request) {
           description,
           images,
         },
-        { new: true, runValidators: true }
+        { new: true, runValidators: true },
       ).lean();
 
       if (room) {
@@ -220,13 +222,13 @@ export async function PUT(request: Request) {
 
     return NextResponse.json(
       { success: true, rooms: updatedRooms },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Update rooms error:", error);
     return NextResponse.json(
       { error: "Failed to update rooms" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -1,7 +1,7 @@
-import React from "react";
-import Input from "@/app/_components/inputs/Input";
 import { Button } from "@/app/_components/Button";
-import { Plus, Trash2, Save, Building2 } from "lucide-react";
+import Input from "@/app/_components/inputs/Input";
+import { Building2, Plus, Save, Trash2 } from "lucide-react";
+import React from "react";
 
 interface Room {
   id: string;
@@ -48,7 +48,7 @@ const RoomsTab: React.FC<RoomsTabProps> = ({
 }) => {
   const selectedBoarding = boardings.find((b) => b.id === selectedBoardingId);
   const selectedBoardingRooms = rooms.filter(
-    (r) => r.boardingId === selectedBoardingId
+    (r) => r.boardingId === selectedBoardingId,
   );
 
   return (
@@ -61,9 +61,11 @@ const RoomsTab: React.FC<RoomsTabProps> = ({
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {boardings.filter((b) => b.id && !b.id.startsWith("temp-")).length === 0 ? (
+          {boardings.filter((b) => b.id && !b.id.startsWith("temp-")).length ===
+          0 ? (
             <div className="col-span-full text-center py-8 text-textSecondary">
-              No Boardings available. Please add a boarding first in the General tab.
+              No Boardings available. Please add a boarding first in the General
+              tab.
             </div>
           ) : (
             boardings
@@ -145,7 +147,7 @@ const RoomsTab: React.FC<RoomsTabProps> = ({
                             updateRoom(
                               room.id,
                               "capacity",
-                              parseInt(e.target.value) || 0
+                              parseInt(e.target.value) || 0,
                             )
                           }
                           min="1"
@@ -158,7 +160,7 @@ const RoomsTab: React.FC<RoomsTabProps> = ({
                             updateRoom(
                               room.id,
                               "price",
-                              parseFloat(e.target.value) || 0
+                              parseFloat(e.target.value) || 0,
                             )
                           }
                           min="0"

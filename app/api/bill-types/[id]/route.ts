@@ -1,14 +1,14 @@
 import { getSession } from "@/lib/auth";
 import connectDB from "@/lib/db";
 import BillType from "@/models/BillType";
-import Room from "@/models/Room";
 import Boarding from "@/models/Boarding";
+import Room from "@/models/Room";
 import { NextResponse } from "next/server";
 
 // DELETE: Delete a bill type
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   await connectDB();
   try {
@@ -24,7 +24,10 @@ export async function DELETE(
     const billType = await BillType.findById(id);
 
     if (!billType) {
-      return NextResponse.json({ error: "Bill type not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Bill type not found" },
+        { status: 404 },
+      );
     }
 
     // Verify room belongs to user's boarding
@@ -48,13 +51,13 @@ export async function DELETE(
 
     return NextResponse.json(
       { success: true, message: "Bill type deleted successfully" },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Delete bill type error:", error);
     return NextResponse.json(
       { error: "Failed to delete bill type" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

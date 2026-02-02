@@ -22,6 +22,7 @@ interface Room {
   description: string;
   images: string[];
   billTypes: BillType[];
+  isAvailable?: boolean;
 }
 
 interface Boarding {

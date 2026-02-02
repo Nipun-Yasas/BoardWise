@@ -97,6 +97,22 @@ export async function PATCH(
 
     console.log("Updated room:", updatedRoom);
 
+    // Check if boarding availability should be updated
+    // If any room is available, boarding should be available
+    // If all rooms are unavailable, boarding should be unavailable
+    if (body.hasOwnProperty("isAvailable")) {
+      const allRooms = await Room.find({ boardingId: updatedRoom.boardingId });
+      const hasAvailableRoom = allRooms.some((r) => r.isAvailable);
+
+      await Boarding.findByIdAndUpdate(updatedRoom.boardingId, {
+        isAvailable: hasAvailableRoom,
+      });
+
+      console.log(
+        `Boarding ${updatedRoom.boardingId} availability updated to: ${hasAvailableRoom}`,
+      );
+    }
+
     return NextResponse.json(
       {
         success: true,
@@ -154,9 +170,18 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
+    const boardingId = room.boardingId;
     await Room.findByIdAndDelete(id);
 
     console.log("Deleted room:", id);
+
+    // Check if boarding should be marked as unavailable
+    const remainingRooms = await Room.find({ boardingId });
+    const hasAvailableRoom = remainingRooms.some((r) => r.isAvailable);
+
+    await Boarding.findByIdAndUpdate(boardingId, {
+      isAvailable: hasAvailableRoom,
+    });
 
     return NextResponse.json(
       { success: true, message: "Room deleted successfully" },

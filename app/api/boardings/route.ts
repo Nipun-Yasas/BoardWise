@@ -36,6 +36,8 @@ export async function GET(request: Request) {
               price: room.price,
               description: room.description,
               images: room.images,
+              isAvailable:
+                room.isAvailable !== undefined ? room.isAvailable : true,
               billTypes: billTypes.map((bt) => ({
                 id: bt._id.toString(),
                 name: bt.name,
@@ -50,6 +52,8 @@ export async function GET(request: Request) {
           description: boarding.description,
           mainImage: boarding.mainImage,
           totalRooms: boarding.totalRooms || 0,
+          isAvailable:
+            boarding.isAvailable !== undefined ? boarding.isAvailable : true,
           rooms: roomsWithBillTypes,
         };
       }),

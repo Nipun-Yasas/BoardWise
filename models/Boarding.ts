@@ -31,6 +31,10 @@ const BoardingSchema = new Schema(
       type: String,
       default: "",
     },
+    isAvailable: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
     timestamps: true,

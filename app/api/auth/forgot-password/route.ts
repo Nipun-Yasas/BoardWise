@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     if (!user) {
       console.log("User not found");
       return NextResponse.json(
-        { message: "If email exists, reset link will be sent" },
+        { message: "Email is not Registered to this Platform" },
         { status: 200 }
       );
     }

@@ -2,43 +2,22 @@ import mongoose, { Schema, model, models } from "mongoose";
 
 const RoomSchema = new Schema(
   {
-    boardingId: {
+    boardingHouse: {
       type: Schema.Types.ObjectId,
-      ref: "Boarding",
-      required: [true, "Boarding ID is required"],
+      ref: "BoardingHouse",
+      required: true,
     },
-    name: {
+    roomNumber: { type: String, required: true },
+    capacity: { type: Number, required: true },
+    price: { type: Number, required: true },
+    status: {
       type: String,
-      required: [true, "Room name is required"],
-    },
-    capacity: {
-      type: Number,
-      required: [true, "Capacity is required"],
-      min: [1, "Capacity must be at least 1"],
-    },
-    price: {
-      type: Number,
-      required: [true, "Price is required"],
-      min: [0, "Price cannot be negative"],
-    },
-    description: {
-      type: String,
-      default: "",
-    },
-    images: {
-      type: [String],
-      default: [],
-    },
-    isAvailable: {
-      type: Boolean,
-      default: true,
+      enum: ["Available", "Full", "Maintenance"],
+      default: "Available",
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 const Room = models.Room || model("Room", RoomSchema);
-
 export default Room;

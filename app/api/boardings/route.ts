@@ -23,7 +23,9 @@ export async function GET(request: Request) {
     // Fetch rooms for each boarding with bill types
     const boardingsWithRooms = await Promise.all(
       boardings.map(async (boarding) => {
-        const rooms = await Room.find({ boardingId: boarding._id }).lean();
+        const rooms = await Room.find({ boardingId: boarding._id })
+          .populate("tenants", "name email mobile_number")
+          .lean();
 
         const roomsWithBillTypes = await Promise.all(
           rooms.map(async (room) => {
@@ -36,6 +38,7 @@ export async function GET(request: Request) {
               price: room.price,
               description: room.description,
               images: room.images,
+              tenants: room.tenants, // Return tenants
               billTypes: billTypes.map((bt) => ({
                 id: bt._id.toString(),
                 name: bt.name,
@@ -127,4 +130,4 @@ export async function POST(request: Request) {
   }
 }
 
-export {};
+export { };

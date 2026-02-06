@@ -33,6 +33,15 @@ const RoomSchema = new Schema(
       type: Boolean,
       default: true,
     },
+    tenants: {
+      type: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: "User",
+        },
+      ],
+      default: [],
+    },
   },
   {
     timestamps: true,

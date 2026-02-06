@@ -22,6 +22,7 @@ interface Room {
   description: string;
   images: string[];
   billTypes: BillType[];
+  tenants?: any[];
 }
 
 interface Boarding {
@@ -203,12 +204,12 @@ export default function Manage() {
           boardings.map((b) =>
             b.id === selectedBoarding.id
               ? {
-                  ...b,
-                  name: selectedBoarding.name,
-                  description: selectedBoarding.description,
-                  mainImage: selectedBoarding.mainImage,
-                  totalRooms: selectedBoarding.totalRooms,
-                }
+                ...b,
+                name: selectedBoarding.name,
+                description: selectedBoarding.description,
+                mainImage: selectedBoarding.mainImage,
+                totalRooms: selectedBoarding.totalRooms,
+              }
               : b,
           ),
         );
@@ -672,6 +673,7 @@ export default function Manage() {
             saving={saving}
             addRoomImage={addRoomImage}
             removeRoomImage={removeRoomImage}
+            refreshData={fetchBoardings}
           />
         );
       case "billing":
@@ -715,11 +717,10 @@ export default function Manage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-t-lg font-medium transition-colors whitespace-nowrap ${
-                activeTab === tab.id
-                  ? "bg-backgroundSecondary text-primary"
-                  : "text-textSecondary hover:text-textPrimary hover:bg-backgroundSecondary/50"
-              }`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-t-lg font-medium transition-colors whitespace-nowrap ${activeTab === tab.id
+                ? "bg-backgroundSecondary text-primary"
+                : "text-textSecondary hover:text-textPrimary hover:bg-backgroundSecondary/50"
+                }`}
               suppressHydrationWarning
             >
               {tab.icon}

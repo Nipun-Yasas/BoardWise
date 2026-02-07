@@ -21,6 +21,7 @@ type BoardingDetails = {
     title: string;
     description: string;
     university: string;
+    distance: number;
     address: string;
     mainImage: string;
     totalRooms: number;
@@ -102,7 +103,7 @@ export default function BoardingDetailsPage({
                         />
                         <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-sm font-semibold text-textPrimary shadow-sm flex items-center gap-1.5">
                             <MapPin className="w-4 h-4 text-primary" />
-                            {boarding.university}
+                            {boarding.university} • {boarding.distance} km
                         </div>
                     </div>
 

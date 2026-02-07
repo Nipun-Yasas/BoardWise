@@ -12,6 +12,14 @@ import { Home, Search } from "lucide-react";
 // Mock User Status
 const USER_HAS_BOARDING = true; // Toggle this to test
 
+const PRESET_UNIVERSITIES = [
+  "University of Moratuwa",
+  "University of Ruhuna",
+  "University of Peradeniya",
+  "NSBM",
+  "SLIIT",
+];
+
 export default function StudentDashboard() {
   const [boardings, setBoardings] = useState<Boarding[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -45,7 +53,10 @@ export default function StudentDashboard() {
   };
 
   const universities = useMemo(() => {
-    const unis = new Set(boardings.map((b) => b.university).filter(Boolean));
+    const unis = new Set([
+      ...PRESET_UNIVERSITIES,
+      ...boardings.map((b) => b.university).filter(Boolean),
+    ]);
     return Array.from(unis).sort();
   }, [boardings]);
 

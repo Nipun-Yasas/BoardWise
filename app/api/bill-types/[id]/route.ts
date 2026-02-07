@@ -19,7 +19,6 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    console.log("Deleting bill type:", id);
 
     const billType = await BillType.findById(id);
 
@@ -46,8 +45,6 @@ export async function DELETE(
     }
 
     await BillType.findByIdAndDelete(id);
-
-    console.log("Deleted bill type:", id);
 
     return NextResponse.json(
       { success: true, message: "Bill type deleted successfully" },

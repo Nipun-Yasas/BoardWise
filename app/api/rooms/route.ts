@@ -76,15 +76,6 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { boardingId, name, capacity, price, description, images } = body;
 
-    console.log("Creating room with data:", {
-      boardingId,
-      name,
-      capacity,
-      price,
-      description,
-      images,
-    });
-
     // Verify boarding belongs to user
     const boarding = await Boarding.findOne({
       _id: boardingId,
@@ -108,8 +99,6 @@ export async function POST(request: Request) {
       images: images || [],
     });
 
-    console.log("Created room:", room);
-
     // Create default bill types (Electricity and Water)
     const defaultBillTypes = ["Electricity", "Water"];
     const createdBillTypes = [];
@@ -124,8 +113,6 @@ export async function POST(request: Request) {
         name: billType.name,
       });
     }
-
-    console.log("Created default bill types:", createdBillTypes);
 
     return NextResponse.json(
       {
@@ -166,8 +153,6 @@ export async function PUT(request: Request) {
     const body = await request.json();
     const { rooms } = body;
 
-    console.log("Updating rooms:", rooms);
-
     if (!Array.isArray(rooms)) {
       return NextResponse.json(
         { error: "Invalid request format" },
@@ -188,7 +173,6 @@ export async function PUT(request: Request) {
       });
 
       if (!boarding) {
-        console.log(`Skipping room ${id} - unauthorized`);
         continue;
       }
 
@@ -217,8 +201,6 @@ export async function PUT(request: Request) {
         });
       }
     }
-
-    console.log("Updated rooms:", updatedRooms);
 
     return NextResponse.json(
       { success: true, rooms: updatedRooms },

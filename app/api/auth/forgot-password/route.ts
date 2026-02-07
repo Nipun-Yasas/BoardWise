@@ -10,11 +10,8 @@ export async function POST(req: NextRequest) {
     await connectDB();
     const { email } = await req.json();
 
-    console.log("Reset request for email:", email);
-
     const user = await User.findOne({ email });
     if (!user) {
-      console.log("User not found");
       return NextResponse.json(
         { message: "If email exists, reset link will be sent" },
         { status: 200 }
@@ -25,8 +22,6 @@ export async function POST(req: NextRequest) {
     const resetToken = crypto.randomBytes(32).toString("hex");
     const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
 
-    console.log("Generated token, saving to database...");
-
     // Save token to database
     await PasswordReset.create({
       userId: user._id,
@@ -34,12 +29,8 @@ export async function POST(req: NextRequest) {
       expiresAt: new Date(Date.now() + 3600000), // 1 hour
     });
 
-    console.log("Token saved successfully");
-
     // Create reset URL
     const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${resetToken}`;
-
-    console.log("Reset URL:", resetUrl);
 
     // Check if email credentials exist
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
@@ -83,7 +74,6 @@ export async function POST(req: NextRequest) {
         `,
       });
 
-      console.log("Email sent successfully");
     } catch (emailError: any) {
       console.error("Email sending failed:", emailError.message);
       // Still return success but log the error

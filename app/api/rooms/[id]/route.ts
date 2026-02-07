@@ -72,8 +72,6 @@ export async function PATCH(
     const body = await request.json();
     const { id } = await params;
 
-    console.log("Updating room:", id, body);
-
     const room = await Room.findById(id);
 
     if (!room) {
@@ -94,8 +92,6 @@ export async function PATCH(
       new: true,
       runValidators: true,
     }).lean();
-
-    console.log("Updated room:", updatedRoom);
 
     return NextResponse.json(
       {
@@ -136,7 +132,6 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    console.log("Deleting room:", id);
 
     const room = await Room.findById(id);
 
@@ -155,8 +150,6 @@ export async function DELETE(
     }
 
     await Room.findByIdAndDelete(id);
-
-    console.log("Deleted room:", id);
 
     return NextResponse.json(
       { success: true, message: "Room deleted successfully" },

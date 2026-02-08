@@ -13,11 +13,13 @@ interface Filters {
 interface BoardingFiltersProps {
   filters: Filters;
   onFilterChange: (key: keyof Filters, value: string | number) => void;
+  universities?: string[];
 }
 
 const BoardingFilters: React.FC<BoardingFiltersProps> = ({
   filters,
   onFilterChange,
+  universities = ["UOM", "UOC", "USJ", "Kelaniya", "SLIIT"], // Default fallback
 }) => {
   return (
     <div className="bg-backgroundSecondary p-6 rounded-xl shadow-md border border-borderPrimary mb-8">
@@ -41,11 +43,11 @@ const BoardingFilters: React.FC<BoardingFiltersProps> = ({
             onChange={(e) => onFilterChange("university", e.target.value)}
           >
             <option value="">All Universities</option>
-            <option value="UOM">UOM</option>
-            <option value="UOC">UOC</option>
-            <option value="USJ">USJ</option>
-            <option value="Kelaniya">Kelaniya</option>
-            <option value="SLIIT">SLIIT</option>
+            {universities.map((uni) => (
+              <option key={uni} value={uni}>
+                {uni}
+              </option>
+            ))}
           </Select>
         </div>
 

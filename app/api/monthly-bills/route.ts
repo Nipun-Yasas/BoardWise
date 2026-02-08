@@ -99,8 +99,6 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { bills } = body;
 
-    console.log("Saving monthly bills:", bills);
-
     if (!Array.isArray(bills)) {
       return NextResponse.json(
         { error: "Bills array is required" },
@@ -163,8 +161,6 @@ export async function POST(request: Request) {
         dueDate: monthlyBill.dueDate.toISOString().split("T")[0],
       });
     }
-
-    console.log("Saved bills:", savedBills);
 
     return NextResponse.json(
       { success: true, bills: savedBills },

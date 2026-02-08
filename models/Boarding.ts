@@ -34,6 +34,13 @@ const BoardingSchema = new Schema(
     isAvailable: {
       type: Boolean,
       default: true,
+    nearestUniversity: {
+      type: String,
+      default: "",
+    },
+    distanceFromUniversity: {
+      type: Number,
+      default: 0,
     },
   },
   {

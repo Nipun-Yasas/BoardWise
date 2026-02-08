@@ -30,6 +30,8 @@ interface Boarding {
   description: string;
   mainImage: string | null;
   totalRooms?: number;
+  nearestUniversity?: string;
+  distanceFromUniversity?: number;
   rooms: Room[];
 }
 
@@ -140,6 +142,8 @@ export default function Manage() {
       description: "",
       mainImage: null,
       totalRooms: 0,
+      nearestUniversity: "",
+      distanceFromUniversity: 0,
       rooms: [],
     };
     setBoardings([...boardings, newBoarding]);
@@ -166,6 +170,8 @@ export default function Manage() {
           description: selectedBoarding.description,
           mainImage: selectedBoarding.mainImage,
           totalRooms: selectedBoarding.totalRooms || 0,
+          nearestUniversity: selectedBoarding.nearestUniversity || "",
+          distanceFromUniversity: selectedBoarding.distanceFromUniversity || 0,
         });
 
         // Extract boarding from nested response
@@ -182,10 +188,9 @@ export default function Manage() {
           b.id === selectedBoarding.id ? createdBoarding : b,
         );
 
-        console.log("Updated boardings:", updatedBoardings);
         setBoardings(updatedBoardings);
         setSelectedBoardingId(createdBoarding.id);
-        toast.success("Boarding created successfully!");
+        toast.success("Saved successfully");
       } else {
         // Update existing boarding
         await axiosInstance.put(
@@ -195,6 +200,8 @@ export default function Manage() {
             description: selectedBoarding.description,
             mainImage: selectedBoarding.mainImage,
             totalRooms: selectedBoarding.totalRooms || 0,
+            nearestUniversity: selectedBoarding.nearestUniversity || "",
+            distanceFromUniversity: selectedBoarding.distanceFromUniversity || 0,
           },
         );
 
@@ -203,16 +210,18 @@ export default function Manage() {
           boardings.map((b) =>
             b.id === selectedBoarding.id
               ? {
-                  ...b,
-                  name: selectedBoarding.name,
-                  description: selectedBoarding.description,
-                  mainImage: selectedBoarding.mainImage,
-                  totalRooms: selectedBoarding.totalRooms,
-                }
+                ...b,
+                name: selectedBoarding.name,
+                description: selectedBoarding.description,
+                mainImage: selectedBoarding.mainImage,
+                totalRooms: selectedBoarding.totalRooms,
+                nearestUniversity: selectedBoarding.nearestUniversity,
+                distanceFromUniversity: selectedBoarding.distanceFromUniversity,
+              }
               : b,
           ),
         );
-        toast.success("Boarding details saved!");
+        toast.success("Saved successfully");
       }
     } catch (error: any) {
       console.error("Error saving boarding:", error);
@@ -254,6 +263,8 @@ export default function Manage() {
               description: currentBoarding.description,
               mainImage: null,
               totalRooms: currentBoarding.totalRooms || 0,
+              nearestUniversity: currentBoarding.nearestUniversity || "",
+              distanceFromUniversity: currentBoarding.distanceFromUniversity || 0,
             },
           );
           toast.success("Image removed successfully!");
@@ -282,7 +293,7 @@ export default function Manage() {
   ) => {
     const { name, value } = e.target;
     // Convert totalRooms to number
-    if (name === "totalRooms") {
+    if (name === "totalRooms" || name === "distanceFromUniversity") {
       updateBoardingInfo(name as keyof Boarding, parseInt(value) || 0);
     } else {
       updateBoardingInfo(name as keyof Boarding, value);
@@ -672,6 +683,7 @@ export default function Manage() {
             saving={saving}
             addRoomImage={addRoomImage}
             removeRoomImage={removeRoomImage}
+            refreshData={fetchBoardings}
           />
         );
       case "billing":
@@ -718,11 +730,10 @@ export default function Manage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-t-lg font-medium transition-colors whitespace-nowrap ${
-                activeTab === tab.id
-                  ? "bg-backgroundSecondary text-primary"
-                  : "text-textSecondary hover:text-textPrimary hover:bg-backgroundSecondary/50"
-              }`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-t-lg font-medium transition-colors whitespace-nowrap ${activeTab === tab.id
+                ? "bg-backgroundSecondary text-primary"
+                : "text-textSecondary hover:text-textPrimary hover:bg-backgroundSecondary/50"
+                }`}
               suppressHydrationWarning
             >
               {tab.icon}

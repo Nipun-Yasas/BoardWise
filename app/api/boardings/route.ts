@@ -23,7 +23,9 @@ export async function GET(request: Request) {
     // Fetch rooms for each boarding with bill types
     const boardingsWithRooms = await Promise.all(
       boardings.map(async (boarding) => {
-        const rooms = await Room.find({ boardingId: boarding._id }).lean();
+        const rooms = await Room.find({ boardingId: boarding._id })
+          .populate("tenants", "name email mobile_number")
+          .lean();
 
         const roomsWithBillTypes = await Promise.all(
           rooms.map(async (room) => {
@@ -80,14 +82,14 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { name, description, mainImage, totalRooms } = body;
-
-    console.log("Creating boarding with data:", {
+    const {
       name,
       description,
       mainImage,
       totalRooms,
-    });
+      nearestUniversity,
+      distanceFromUniversity,
+    } = body;
 
     // Validate required fields
     if (!name || !description) {
@@ -104,9 +106,9 @@ export async function POST(request: Request) {
       description,
       mainImage: mainImage || null,
       totalRooms: totalRooms || 0,
+      nearestUniversity: nearestUniversity || "",
+      distanceFromUniversity: distanceFromUniversity || 0,
     });
-
-    console.log("Created boarding:", boarding);
 
     return NextResponse.json(
       {
@@ -117,6 +119,8 @@ export async function POST(request: Request) {
           description: boarding.description,
           mainImage: boarding.mainImage,
           totalRooms: boarding.totalRooms || 0,
+          nearestUniversity: boarding.nearestUniversity || "",
+          distanceFromUniversity: boarding.distanceFromUniversity || 0,
           rooms: [],
         },
       },

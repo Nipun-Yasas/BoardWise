@@ -146,7 +146,7 @@ export default function Register({ onSwitchToLogin }: RegisterProps) {
                   ? "border-red-500"
                   : "border-borderPrimary"
                   }`}
-                placeholder="+1234567890"
+                placeholder="0*********"
               />
             </div>
             {formik.touched.mobile_number && formik.errors.mobile_number ? (

@@ -1,12 +1,18 @@
 "use client";
 
+import React from "react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
+import { useSidebar } from "./SidebarContext";
+
 export const ThemeToggle = ({ className }: { className?: string }) => {
     const { setTheme, resolvedTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
+    const { setIsLocked } = useSidebar();
+    const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
 
     useEffect(() => {
         setMounted(true);
@@ -16,6 +22,11 @@ export const ThemeToggle = ({ className }: { className?: string }) => {
         <button
             onClick={(e) => {
                 const newTheme = resolvedTheme === "dark" ? "light" : "dark";
+
+                // Lock sidebar from closing
+                setIsLocked(true);
+                if (timeoutRef.current) clearTimeout(timeoutRef.current);
+                timeoutRef.current = setTimeout(() => setIsLocked(false), 600);
 
                 if (!document.startViewTransition) {
                     setTheme(newTheme);

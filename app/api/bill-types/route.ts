@@ -72,7 +72,6 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { roomId, name } = body;
 
-    console.log("Creating bill type:", { roomId, name });
 
     if (!roomId || !name) {
       return NextResponse.json(
@@ -101,8 +100,6 @@ export async function POST(request: Request) {
       roomId,
       name,
     });
-
-    console.log("Created bill type:", billType);
 
     return NextResponse.json(
       {

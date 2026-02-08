@@ -142,8 +142,6 @@ export async function POST(request: Request) {
       });
     }
 
-    console.log("Created default bill types:", createdBillTypes);
-
     return NextResponse.json(
       {
         success: true,
@@ -183,8 +181,6 @@ export async function PUT(request: Request) {
     const body = await request.json();
     const { rooms } = body;
 
-    console.log("Updating rooms:", rooms);
-
     if (!Array.isArray(rooms)) {
       return NextResponse.json(
         { error: "Invalid request format" },
@@ -213,7 +209,6 @@ export async function PUT(request: Request) {
       });
 
       if (!boarding) {
-        console.log(`Skipping room ${id} - unauthorized`);
         continue;
       }
 

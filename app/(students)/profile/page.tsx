@@ -45,8 +45,6 @@ export default function StudentProfile() {
     },
     validationSchema: ProfileSchema,
     onSubmit: (values) => {
-      console.log("Form values:", values);
-      console.log("Image:", previewImage);
       setIsEditing(false);
     },
   });

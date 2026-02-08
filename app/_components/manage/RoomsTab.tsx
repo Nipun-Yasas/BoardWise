@@ -1,7 +1,14 @@
 import { Button } from "@/app/_components/Button";
 import Input from "@/app/_components/inputs/Input";
-import { Building2, Plus, Save, Trash2 } from "lucide-react";
-import React from "react";
+import { Building2, Plus, Save, Trash2, UserPlus, X } from "lucide-react";
+import React, { useState } from "react";
+
+interface Tenant {
+  _id: string;
+  name: string;
+  email: string;
+  mobile_number: string;
+}
 
 interface Room {
   id: string;
@@ -32,6 +39,7 @@ interface RoomsTabProps {
   saving: boolean;
   addRoomImage: (roomId: string, file: File) => void;
   removeRoomImage: (roomId: string, imageIndex: number) => void;
+  refreshData?: () => void; // Callback to refresh data after tenant updates
 }
 
 const RoomsTab: React.FC<RoomsTabProps> = ({
@@ -46,11 +54,72 @@ const RoomsTab: React.FC<RoomsTabProps> = ({
   saving,
   addRoomImage,
   removeRoomImage,
+  refreshData,
 }) => {
   const selectedBoarding = boardings.find((b) => b.id === selectedBoardingId);
   const selectedBoardingRooms = rooms.filter(
     (r) => r.boardingId === selectedBoardingId,
   );
+
+  const [newTenantEmails, setNewTenantEmails] = useState<Record<string, string>>(
+    {}
+  );
+  const [addingTenantMap, setAddingTenantMap] = useState<Record<string, boolean>>(
+    {}
+  );
+
+  const handleAddTenant = async (roomId: string) => {
+    const email = newTenantEmails[roomId];
+    if (!email) return;
+
+    setAddingTenantMap((prev) => ({ ...prev, [roomId]: true }));
+
+    try {
+      const res = await fetch(`/api/rooms/${roomId}/tenants`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, action: "add" }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        // Clear input
+        setNewTenantEmails((prev) => ({ ...prev, [roomId]: "" }));
+        // Refresh data to show new tenant
+        if (refreshData) refreshData();
+      } else {
+        alert(data.error || "Failed to add tenant");
+      }
+    } catch (error) {
+      console.error("Error adding tenant:", error);
+      alert("Failed to add tenant");
+    } finally {
+      setAddingTenantMap((prev) => ({ ...prev, [roomId]: false }));
+    }
+  };
+
+  const handleRemoveTenant = async (roomId: string, email: string) => {
+    if (!confirm("Are you sure you want to remove this tenant?")) return;
+
+    try {
+      const res = await fetch(`/api/rooms/${roomId}/tenants`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, action: "remove" }),
+      });
+
+      if (res.ok) {
+        if (refreshData) refreshData();
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to remove tenant");
+      }
+    } catch (error) {
+      console.error("Error removing tenant:", error);
+      alert("Failed to remove tenant");
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -63,7 +132,7 @@ const RoomsTab: React.FC<RoomsTabProps> = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {boardings.filter((b) => b.id && !b.id.startsWith("temp-")).length ===
-          0 ? (
+            0 ? (
             <div className="col-span-full text-center py-8 text-textSecondary">
               No Boardings available. Please add a boarding first in the General
               tab.
@@ -75,11 +144,10 @@ const RoomsTab: React.FC<RoomsTabProps> = ({
                 <div
                   key={boarding.id}
                   onClick={() => setSelectedBoardingId(boarding.id)}
-                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                    selectedBoardingId === boarding.id
+                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${selectedBoardingId === boarding.id
                       ? "border-primary bg-primary/5"
                       : "border-borderPrimary hover:border-primary/50"
-                  }`}
+                    }`}
                 >
                   <h3 className="font-semibold text-textPrimary mb-2">
                     {boarding.name}
@@ -209,6 +277,69 @@ const RoomsTab: React.FC<RoomsTabProps> = ({
                           placeholder="Room specific details..."
                         />
                       </div>
+
+                      {/* Tenants Section */}
+                      {!room.id.startsWith("temp-") && (
+                        <div className="mt-4 pt-4 border-t border-borderPrimary">
+                          <label className="text-sm font-medium text-textPrimary block mb-2">
+                            Current Tenants ({room.tenants?.length || 0} / {room.capacity})
+                          </label>
+
+                          {/* Add Tenant Form */}
+                          <div className="flex gap-2 mb-3">
+                            <Input
+                              placeholder="Student Email"
+                              value={newTenantEmails[room.id] || ""}
+                              onChange={(e) =>
+                                setNewTenantEmails({
+                                  ...newTenantEmails,
+                                  [room.id]: e.target.value,
+                                })
+                              }
+                              className="mb-0"
+                            />
+                            <Button
+                              onClick={() => handleAddTenant(room.id)}
+                              disabled={
+                                addingTenantMap[room.id] ||
+                                !newTenantEmails[room.id] ||
+                                (room.tenants?.length || 0) >= room.capacity
+                              }
+                              frontIcon={<UserPlus size={16} />}
+                            >
+                              Add
+                            </Button>
+                          </div>
+
+                          {/* Tenant List */}
+                          <div className="space-y-2">
+                            {room.tenants && room.tenants.length > 0 ? (
+                              room.tenants.map((tenant) => (
+                                <div
+                                  key={tenant._id}
+                                  className="flex items-center justify-between p-2 bg-backgroundSecondary rounded-lg border border-borderPrimary text-sm"
+                                >
+                                  <div>
+                                    <p className="font-medium text-textPrimary">{tenant.name}</p>
+                                    <p className="text-xs text-textSecondary">{tenant.email}</p>
+                                  </div>
+                                  <button
+                                    onClick={() => handleRemoveTenant(room.id, tenant.email)}
+                                    className="text-muted-foreground hover:text-red-500 p-1"
+                                    title="Remove Tenant"
+                                  >
+                                    <X size={14} />
+                                  </button>
+                                </div>
+                              ))
+                            ) : (
+                              <p className="text-sm text-textSecondary italic">
+                                No tenants assigned.
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Room Images */}

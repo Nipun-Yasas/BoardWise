@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, Users, Wallet } from "lucide-react";
+import { MapPin, Users, Wallet, Eye } from "lucide-react";
 
 export const Card = React.memo(
   ({
@@ -29,8 +29,8 @@ export const Card = React.memo(
       className={cn(
         "rounded-3xl relative overflow-hidden w-full transition-all duration-300 ease-out bg-backgroundSecondary border-none hover:shadow-lg",
         hovered !== null &&
-          hovered !== index &&
-          "blur-[1px] scale-[0.98] opacity-80"
+        hovered !== index &&
+        "blur-[1px] scale-[0.98] opacity-80"
       )}
     >
       <Link href={`/boarding/${card.id}`} className="block h-full w-full">
@@ -43,6 +43,9 @@ export const Card = React.memo(
           <div className="absolute top-3 right-3 bg-black/50 backdrop-blur-md text-white text-xs font-medium px-2 py-1 rounded-full flex items-center gap-1">
             <MapPin className="w-3 h-3" />
             {card.distance} km
+          </div>
+          <div className="absolute top-3 left-3 bg-white/20 backdrop-blur-md p-2 rounded-full hover:bg-white/40 transition-colors duration-200">
+            <Eye className="w-4 h-4 text-white" />
           </div>
         </div>
 

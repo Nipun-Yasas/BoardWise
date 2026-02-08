@@ -10,6 +10,8 @@ interface Boarding {
   mainImage: string | null;
   totalRooms?: number;
   isAvailable?: boolean;
+  nearestUniversity?: string;
+  distanceFromUniversity?: number;
 }
 
 interface GeneralInfoTabProps {
@@ -64,7 +66,7 @@ const GeneralInfoTab: React.FC<GeneralInfoTabProps> = ({
         {/* Boarding List */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {boardings.filter((b) => b.id && !b.id.startsWith("temp-")).length ===
-          0 ? (
+            0 ? (
             <div className="col-span-full text-center py-8 text-textSecondary">
               No Boardings yet
             </div>
@@ -77,11 +79,14 @@ const GeneralInfoTab: React.FC<GeneralInfoTabProps> = ({
                 <div
                   key={boarding.id}
                   onClick={() => setSelectedBoardingId(boarding.id)}
+
                   className={`p-4 rounded-lg border-2 cursor-pointer transition-all relative ${
                     selectedBoardingId === boarding.id
                       ? "border-primary bg-primary/5"
                       : "border-borderPrimary hover:border-primary/50"
                   }`}
+
+                  
                 >
                   {/* Availability Badge */}
                   <div
@@ -139,9 +144,8 @@ const GeneralInfoTab: React.FC<GeneralInfoTabProps> = ({
               <div className="flex gap-4 items-start">
                 <label
                   htmlFor="boarding-main-image"
-                  className={`w-full aspect-video rounded-lg border-2 border-dashed border-borderPrimary flex flex-col items-center justify-center text-muted-foreground hover:bg-background/50 cursor-pointer transition-colors relative overflow-hidden ${
-                    !selectedBoarding.mainImage ? "p-8" : ""
-                  }`}
+                  className={`w-full aspect-video rounded-lg border-2 border-dashed border-borderPrimary flex flex-col items-center justify-center text-muted-foreground hover:bg-background/50 cursor-pointer transition-colors relative overflow-hidden ${!selectedBoarding.mainImage ? "p-8" : ""
+                    }`}
                 >
                   {selectedBoarding.mainImage ? (
                     <>
@@ -191,25 +195,49 @@ const GeneralInfoTab: React.FC<GeneralInfoTabProps> = ({
               </div>
             </div>
 
-            {/* Boarding Name */}
-            <Input
-              label="Boarding Name"
-              name="name"
-              value={selectedBoarding.name}
-              onChange={handleGeneralChange}
-              placeholder="Enter boarding name"
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Boarding Name */}
+              <Input
+                label="Boarding Name"
+                name="name"
+                value={selectedBoarding.name}
+                onChange={handleGeneralChange}
+                placeholder="Enter boarding name"
+              />
 
-            {/* Total Rooms */}
-            <Input
-              label="Total Number of Rooms"
-              name="totalRooms"
-              type="number"
-              value={selectedBoarding.totalRooms}
-              onChange={handleGeneralChange}
-              placeholder="Enter total number of rooms"
-              min="0"
-            />
+              {/* Total Rooms */}
+              <Input
+                label="Total Number of Rooms"
+                name="totalRooms"
+                type="number"
+                value={selectedBoarding.totalRooms}
+                onChange={handleGeneralChange}
+                placeholder="Enter total number of rooms"
+                min="0"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Nearest University */}
+              <Input
+                label="Nearest University"
+                name="nearestUniversity"
+                value={selectedBoarding.nearestUniversity || ""}
+                onChange={handleGeneralChange}
+                placeholder="Enter nearest university"
+              />
+
+              {/* Distance From University */}
+              <Input
+                label="Distance from University (km)"
+                name="distanceFromUniversity"
+                type="number"
+                value={selectedBoarding.distanceFromUniversity || 0}
+                onChange={handleGeneralChange}
+                placeholder="Enter distance from university"
+                min="0"
+              />
+            </div>
 
             {/* Total Room Capacity (Calculated) */}
 

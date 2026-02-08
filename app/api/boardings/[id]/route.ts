@@ -22,24 +22,28 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const { name, description, mainImage, totalRooms } = body;
-
-    console.log("Updating boarding:", id, "with data:", {
+    const {
       name,
       description,
       mainImage,
       totalRooms,
-    });
-    console.log("User ID:", session.userId);
+      nearestUniversity,
+      distanceFromUniversity,
+    } = body;
 
     // Find and update boarding
     const boarding = await Boarding.findOneAndUpdate(
       { _id: id, ownerId: session.userId },
-      { name, description, mainImage, totalRooms: totalRooms || 0 },
+      {
+        name,
+        description,
+        mainImage,
+        totalRooms: totalRooms || 0,
+        nearestUniversity: nearestUniversity || "",
+        distanceFromUniversity: distanceFromUniversity || 0,
+      },
       { new: true, runValidators: true },
     );
-
-    console.log("Found boarding:", boarding);
 
     if (!boarding) {
       return NextResponse.json(
@@ -57,6 +61,8 @@ export async function PUT(
           description: boarding.description,
           mainImage: boarding.mainImage,
           totalRooms: boarding.totalRooms || 0,
+          nearestUniversity: boarding.nearestUniversity || "",
+          distanceFromUniversity: boarding.distanceFromUniversity || 0,
         },
       },
       { status: 200 },

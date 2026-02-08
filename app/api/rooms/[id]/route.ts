@@ -72,8 +72,6 @@ export async function PATCH(
     const body = await request.json();
     const { id } = await params;
 
-    console.log("Updating room:", id, body);
-
     const room = await Room.findById(id);
 
     if (!room) {
@@ -152,7 +150,6 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    console.log("Deleting room:", id);
 
     const room = await Room.findById(id);
 

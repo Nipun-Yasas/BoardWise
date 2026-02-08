@@ -22,7 +22,6 @@ interface Room {
   description: string;
   images: string[];
   billTypes: BillType[];
-  isAvailable?: boolean;
 }
 
 interface Boarding {
@@ -57,12 +56,7 @@ export default function Manage() {
 
   const [boardings, setBoardings] = useState<Boarding[]>([]);
   const [selectedBoardingId, setSelectedBoardingId] = useState<string>("");
-  const [selectedBillingBoardingId, setSelectedBillingBoardingId] =
-    useState<string>("");
   const selectedBoarding = boardings.find((b) => b.id === selectedBoardingId);
-  const selectedBillingBoarding = boardings.find(
-    (b) => b.id === selectedBillingBoardingId,
-  );
 
   const [selectedMonth, setSelectedMonth] = useState(
     new Date().toISOString().slice(0, 7),
@@ -80,15 +74,12 @@ export default function Manage() {
     fetchBoardings();
   }, []);
 
-  // Fetch monthly bills when billing boarding or month changes
+  // Fetch monthly bills when boarding or month changes
   useEffect(() => {
-    if (
-      selectedBillingBoardingId &&
-      !selectedBillingBoardingId.startsWith("temp-")
-    ) {
+    if (selectedBoardingId && !selectedBoardingId.startsWith("temp-")) {
       fetchMonthlyBills();
     }
-  }, [selectedBillingBoardingId, selectedMonth]);
+  }, [selectedBoardingId, selectedMonth]);
 
   const fetchBoardings = async () => {
     try {
@@ -110,7 +101,6 @@ export default function Manage() {
 
         setBoardings(boardingsWithBillTypes);
         setSelectedBoardingId(boardingsWithBillTypes[0].id);
-        setSelectedBillingBoardingId(boardingsWithBillTypes[0].id);
       } else {
         // No boardings yet, create empty state
         setBoardings([]);
@@ -125,18 +115,11 @@ export default function Manage() {
   };
 
   const fetchMonthlyBills = async () => {
-    if (
-      !selectedBillingBoardingId ||
-      selectedBillingBoardingId.startsWith("temp-")
-    )
-      return;
+    if (!selectedBoardingId || selectedBoardingId.startsWith("temp-")) return;
 
     try {
       const response = await axiosInstance.get(
-        API_PATHS.MONTHLY_BILL.GET_ALL(
-          selectedBillingBoardingId,
-          selectedMonth,
-        ),
+        API_PATHS.MONTHLY_BILL.GET_ALL(selectedBoardingId, selectedMonth),
       );
 
       const fetchedBills = response.data;
@@ -328,7 +311,6 @@ export default function Manage() {
       price: 0,
       description: "",
       images: [],
-      isAvailable: true,
       billTypes: [
         { id: `temp-${getNextId()}`, name: "Electricity" },
         { id: `temp-${getNextId()}`, name: "Water" },
@@ -409,7 +391,6 @@ export default function Manage() {
           price: room.price,
           description: room.description,
           images: room.images,
-          isAvailable: room.isAvailable !== undefined ? room.isAvailable : true,
         });
       }
 
@@ -709,9 +690,9 @@ export default function Manage() {
         return (
           <BillingTab
             boardings={boardings}
-            selectedBoardingId={selectedBillingBoardingId}
-            setSelectedBoardingId={setSelectedBillingBoardingId}
-            rooms={selectedBillingBoarding?.rooms || []}
+            selectedBoardingId={selectedBoardingId}
+            setSelectedBoardingId={setSelectedBoardingId}
+            rooms={selectedBoarding?.rooms || []}
             addRoomBillType={addRoomBillType}
             removeRoomBillType={removeRoomBillType}
             roomBills={roomBills}

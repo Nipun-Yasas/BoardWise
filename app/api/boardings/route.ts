@@ -40,6 +40,8 @@ export async function GET(request: Request) {
               images: room.images,
               isAvailable:
                 room.isAvailable !== undefined ? room.isAvailable : true,
+              gender: room.gender || "Male",
+              tenants: room.tenants || [],
               billTypes: billTypes.map((bt) => ({
                 id: bt._id.toString(),
                 name: bt.name,

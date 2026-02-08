@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { StatCard } from "@/app/_components/dashboard/StatCard";
 import { RevenueChart } from "@/app/_components/dashboard/RevenueChart";
 import { Building2, CreditCard, DollarSign, Users } from "lucide-react";
+import axiosInstance, { API_PATHS } from "@/lib/axios";
 
 interface DashboardStats {
   totalRevenue: number;
@@ -32,13 +33,8 @@ export default function OwnerDashboard() {
   useEffect(() => {
     async function fetchStats() {
       try {
-        const response = await fetch("/api/owner-dashboard/stats");
-        if (response.ok) {
-          const data = await response.json();
-          setStats(data);
-        } else {
-          console.error("Failed to fetch dashboard stats");
-        }
+        const response = await axiosInstance.get(API_PATHS.DASHBOARD.STATS);
+        setStats(response.data);
       } catch (error) {
         console.error("Error fetching dashboard stats:", error);
       } finally {

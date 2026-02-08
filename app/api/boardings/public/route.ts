@@ -39,6 +39,17 @@ export async function GET() {
           return acc + available;
         }, 0);
 
+        // Calculate boarding gender
+        const genders = rooms.map((r) => r.gender || "Male");
+        const hasMale = genders.includes("Male");
+        const hasFemale = genders.includes("Female");
+        let gender = "Male";
+        if (hasMale && hasFemale) {
+          gender = "Mixed";
+        } else if (hasFemale) {
+          gender = "Female";
+        }
+
         return {
           id: boarding._id.toString(),
           title: boarding.name,
@@ -53,6 +64,7 @@ export async function GET() {
           description: boarding.description,
           address: boarding.address,
           totalRooms: boarding.totalRooms,
+          gender,
         };
       }),
     );

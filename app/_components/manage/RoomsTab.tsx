@@ -2,6 +2,7 @@ import { Button } from "@/app/_components/Button";
 import Input from "@/app/_components/inputs/Input";
 import { Building2, Plus, Save, Trash2, UserPlus, X } from "lucide-react";
 import React, { useState } from "react";
+import { toast } from "sonner";
 
 interface Tenant {
   _id: string;
@@ -19,6 +20,8 @@ interface Room {
   description: string;
   images: string[];
   isAvailable: boolean;
+  tenants?: Tenant[];
+  gender: "Male" | "Female";
 }
 
 interface Boarding {
@@ -40,6 +43,7 @@ interface RoomsTabProps {
   addRoomImage: (roomId: string, file: File) => void;
   removeRoomImage: (roomId: string, imageIndex: number) => void;
   refreshData?: () => void; // Callback to refresh data after tenant updates
+  toggleRoomAvailability: (roomId: string, currentStatus: boolean) => void;
 }
 
 const RoomsTab: React.FC<RoomsTabProps> = ({
@@ -55,6 +59,7 @@ const RoomsTab: React.FC<RoomsTabProps> = ({
   addRoomImage,
   removeRoomImage,
   refreshData,
+  toggleRoomAvailability,
 }) => {
   const selectedBoarding = boardings.find((b) => b.id === selectedBoardingId);
   const selectedBoardingRooms = rooms.filter(
@@ -89,11 +94,11 @@ const RoomsTab: React.FC<RoomsTabProps> = ({
         // Refresh data to show new tenant
         if (refreshData) refreshData();
       } else {
-        alert(data.error || "Failed to add tenant");
+        toast.error(data.error || "Failed to add tenant");
       }
     } catch (error) {
       console.error("Error adding tenant:", error);
-      alert("Failed to add tenant");
+      toast.error("Failed to add tenant");
     } finally {
       setAddingTenantMap((prev) => ({ ...prev, [roomId]: false }));
     }
@@ -113,11 +118,11 @@ const RoomsTab: React.FC<RoomsTabProps> = ({
         if (refreshData) refreshData();
       } else {
         const data = await res.json();
-        alert(data.error || "Failed to remove tenant");
+        toast.error(data.error || "Failed to remove tenant");
       }
     } catch (error) {
       console.error("Error removing tenant:", error);
-      alert("Failed to remove tenant");
+      toast.error("Failed to remove tenant");
     }
   };
 
@@ -145,8 +150,8 @@ const RoomsTab: React.FC<RoomsTabProps> = ({
                   key={boarding.id}
                   onClick={() => setSelectedBoardingId(boarding.id)}
                   className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${selectedBoardingId === boarding.id
-                      ? "border-primary bg-primary/5"
-                      : "border-borderPrimary hover:border-primary/50"
+                    ? "border-primary bg-primary/5"
+                    : "border-borderPrimary hover:border-primary/50"
                     }`}
                 >
                   <h3 className="font-semibold text-textPrimary mb-2">
@@ -195,23 +200,17 @@ const RoomsTab: React.FC<RoomsTabProps> = ({
                         </span>
                         <button
                           onClick={() =>
-                            updateRoom(
-                              room.id,
-                              "isAvailable",
-                              !room.isAvailable,
-                            )
+                            toggleRoomAvailability(room.id, room.isAvailable)
                           }
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                            room.isAvailable ? "bg-primary" : "bg-gray-300"
-                          }`}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${room.isAvailable ? "bg-primary" : "bg-gray-300"
+                            }`}
                           title="Toggle availability"
                         >
                           <span
-                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                              room.isAvailable
-                                ? "translate-x-6"
-                                : "translate-x-1"
-                            }`}
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${room.isAvailable
+                              ? "translate-x-6"
+                              : "translate-x-1"
+                              }`}
                           />
                         </button>
                       </div>
@@ -235,6 +234,39 @@ const RoomsTab: React.FC<RoomsTabProps> = ({
                         }
                         placeholder="e.g. Master Bedroom"
                       />
+                      <div>
+                        <label className="text-sm font-medium text-textPrimary mb-1 block">
+                          Gender
+                        </label>
+                        <div className="flex gap-4 mt-2">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="radio"
+                              name={`gender-${room.id}`}
+                              value="Male"
+                              checked={room.gender === "Male" || !room.gender} // Default to Male if undefined
+                              onChange={() =>
+                                updateRoom(room.id, "gender", "Male")
+                              }
+                              className="w-4 h-4 text-primary focus:ring-primary"
+                            />
+                            <span className="text-sm text-textSecondary">Male</span>
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="radio"
+                              name={`gender-${room.id}`}
+                              value="Female"
+                              checked={room.gender === "Female"}
+                              onChange={() =>
+                                updateRoom(room.id, "gender", "Female")
+                              }
+                              className="w-4 h-4 text-primary focus:ring-primary"
+                            />
+                            <span className="text-sm text-textSecondary">Female</span>
+                          </label>
+                        </div>
+                      </div>
                       <div className="grid grid-cols-2 gap-4">
                         <Input
                           label="Capacity"

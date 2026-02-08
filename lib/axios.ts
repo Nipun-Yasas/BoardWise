@@ -14,6 +14,12 @@ export const API_PATHS = {
     ME: "/auth/me",
     LOGOUT: "/auth/logout",
   },
+  PROFILE: {
+    UPDATE: "/users/profile",
+  },
+  DASHBOARD: {
+    STATS: "/owner-dashboard/stats",
+  },
   BOARDING: {
     GET_ALL: "/boardings",
     CREATE: "/boardings",

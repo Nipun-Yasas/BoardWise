@@ -22,6 +22,9 @@ interface Room {
   description: string;
   images: string[];
   billTypes: BillType[];
+  isAvailable: boolean;
+  tenants?: any[];
+  gender: "Male" | "Female";
 }
 
 interface Boarding {
@@ -33,6 +36,7 @@ interface Boarding {
   nearestUniversity?: string;
   distanceFromUniversity?: number;
   rooms: Room[];
+  isAvailable?: boolean;
 }
 
 interface RoomBill {
@@ -176,7 +180,6 @@ export default function Manage() {
 
         // Extract boarding from nested response
         const createdBoarding = response.data.boarding || response.data;
-        console.log("Created boarding:", createdBoarding);
 
         // Ensure the created boarding has a rooms array
         if (!createdBoarding.rooms) {
@@ -315,6 +318,8 @@ export default function Manage() {
         { id: `temp-${getNextId()}`, name: "Electricity" },
         { id: `temp-${getNextId()}`, name: "Water" },
       ],
+      isAvailable: true,
+      gender: "Male",
     };
     updateBoardingInfo("rooms", [...selectedBoarding.rooms, newRoom]);
   };
@@ -325,6 +330,36 @@ export default function Manage() {
       room.id === roomId ? { ...room, [field]: value } : room,
     );
     updateBoardingInfo("rooms", updatedRooms);
+  };
+
+  const toggleRoomAvailability = async (roomId: string, currentStatus: boolean) => {
+    if (!selectedBoarding) return;
+
+    // Optimistic update
+    const newStatus = !currentStatus;
+    updateRoom(roomId, "isAvailable", newStatus);
+
+    // If it's a temp room, we are done (local state only)
+    if (roomId.startsWith("temp-")) return;
+
+    try {
+      // Helper to check if ID is a valid MongoDB ObjectId
+      const isValidMongoId = (id: string) => /^[a-f\d]{24}$/i.test(id);
+
+      if (isValidMongoId(roomId)) {
+        await axiosInstance.patch(API_PATHS.ROOM.UPDATE(roomId), {
+          isAvailable: newStatus,
+        });
+        toast.success(`Room marked as ${newStatus ? "available" : "unavailable"}`);
+        // Refresh boardings to ensure parent boarding availability is synced
+        fetchBoardings();
+      }
+    } catch (error: any) {
+      console.error("Error toggling room availability:", error);
+      toast.error("Failed to update status");
+      // Revert on error
+      updateRoom(roomId, "isAvailable", currentStatus);
+    }
   };
 
   const removeRoom = async (roomId: string) => {
@@ -684,6 +719,7 @@ export default function Manage() {
             addRoomImage={addRoomImage}
             removeRoomImage={removeRoomImage}
             refreshData={fetchBoardings}
+            toggleRoomAvailability={toggleRoomAvailability}
           />
         );
       case "billing":

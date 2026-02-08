@@ -12,6 +12,7 @@ interface Boarding {
   isAvailable?: boolean;
   nearestUniversity?: string;
   distanceFromUniversity?: number;
+  rooms?: { isAvailable?: boolean; gender?: string }[];
 }
 
 interface GeneralInfoTabProps {
@@ -80,26 +81,62 @@ const GeneralInfoTab: React.FC<GeneralInfoTabProps> = ({
                   key={boarding.id}
                   onClick={() => setSelectedBoardingId(boarding.id)}
 
-                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all relative ${
-                    selectedBoardingId === boarding.id
-                      ? "border-primary bg-primary/5"
-                      : "border-borderPrimary hover:border-primary/50"
-                  }`}
+                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all relative ${selectedBoardingId === boarding.id
+                    ? "border-primary bg-primary/5"
+                    : "border-borderPrimary hover:border-primary/50"
+                    }`}
 
-                  
+
                 >
                   {/* Availability Badge */}
-                  <div
-                    className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium ${
-                      boarding.isAvailable !== false
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700"
-                    }`}
-                  >
-                    {boarding.isAvailable !== false
-                      ? "Available"
-                      : "Unavailable"}
-                  </div>
+                  {(() => {
+                    const isAvailable = boarding.rooms && boarding.rooms.length > 0
+                      ? boarding.rooms.some(r => r.isAvailable)
+                      : boarding.isAvailable !== false;
+
+                    return (
+                      <div
+                        className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium ${isAvailable
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
+                          }`}
+                      >
+                        {isAvailable ? "Available" : "Unavailable"}
+                      </div>
+                    );
+                  })()}
+
+                  {/* Gender Badge */}
+                  {(() => {
+                    const rooms = boarding.rooms || [];
+                    const hasMale = rooms.some(r => r.gender === 'Male' || !r.gender); // Default to male if undefined
+                    const hasFemale = rooms.some(r => r.gender === 'Female');
+
+                    let genderStatus = "Male";
+                    let genderColor = "bg-blue-100 text-blue-700";
+
+                    if (hasMale && hasFemale) {
+                      genderStatus = "Mixed";
+                      genderColor = "bg-purple-100 text-purple-700";
+                    } else if (hasFemale) {
+                      genderStatus = "Female";
+                      genderColor = "bg-pink-100 text-pink-700";
+                    } else {
+                      // Default Male
+                      genderStatus = "Male";
+                      genderColor = "bg-blue-100 text-blue-700";
+                    }
+
+                    if (rooms.length === 0) return null;
+
+                    return (
+                      <div
+                        className={`absolute top-2 right-24 px-2 py-1 rounded-full text-xs font-medium ${genderColor}`}
+                      >
+                        {genderStatus}
+                      </div>
+                    );
+                  })()}
                   {boarding.mainImage ? (
                     <img
                       src={boarding.mainImage}

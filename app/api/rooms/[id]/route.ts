@@ -44,6 +44,7 @@ export async function GET(
         description: room.description,
         images: room.images,
         isAvailable: room.isAvailable,
+        gender: room.gender,
       },
       { status: 200 },
     );
@@ -69,7 +70,16 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    const bodyText = await request.text();
+
+    if (!bodyText) {
+      return NextResponse.json(
+        { error: "Request body is empty" },
+        { status: 400 },
+      );
+    }
+
+    const body = JSON.parse(bodyText);
     const { id } = await params;
 
     const room = await Room.findById(id);
@@ -93,8 +103,6 @@ export async function PATCH(
       runValidators: true,
     }).lean();
 
-    console.log("Updated room:", updatedRoom);
-
     // Check if boarding availability should be updated
     // If any room is available, boarding should be available
     // If all rooms are unavailable, boarding should be unavailable
@@ -105,10 +113,6 @@ export async function PATCH(
       await Boarding.findByIdAndUpdate(updatedRoom.boardingId, {
         isAvailable: hasAvailableRoom,
       });
-
-      console.log(
-        `Boarding ${updatedRoom.boardingId} availability updated to: ${hasAvailableRoom}`,
-      );
     }
 
     return NextResponse.json(
@@ -123,6 +127,7 @@ export async function PATCH(
           description: updatedRoom.description,
           images: updatedRoom.images,
           isAvailable: updatedRoom.isAvailable,
+          gender: updatedRoom.gender,
         },
       },
       { status: 200 },
@@ -169,8 +174,6 @@ export async function DELETE(
 
     const boardingId = room.boardingId;
     await Room.findByIdAndDelete(id);
-
-    console.log("Deleted room:", id);
 
     // Check if boarding should be marked as unavailable
     const remainingRooms = await Room.find({ boardingId });

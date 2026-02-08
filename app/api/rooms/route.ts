@@ -51,6 +51,7 @@ export async function GET(request: Request) {
       description: room.description,
       images: room.images,
       isAvailable: room.isAvailable,
+      gender: room.gender,
     }));
 
     return NextResponse.json(formattedRooms, { status: 200 });
@@ -82,17 +83,8 @@ export async function POST(request: Request) {
       description,
       images,
       isAvailable,
+      gender,
     } = body;
-
-    console.log("Creating room with data:", {
-      boardingId,
-      name,
-      capacity,
-      price,
-      description,
-      images,
-      isAvailable,
-    });
 
     // Verify boarding belongs to user
     const boarding = await Boarding.findOne({
@@ -116,9 +108,8 @@ export async function POST(request: Request) {
       description: description || "",
       images: images || [],
       isAvailable: isAvailable !== undefined ? isAvailable : true,
+      gender: gender || "Male",
     });
-
-    console.log("Created room:", room);
 
     // Update boarding availability (if any room is available, boarding is available)
     const allRooms = await Room.find({ boardingId });
@@ -155,6 +146,7 @@ export async function POST(request: Request) {
           images: room.images,
           isAvailable: room.isAvailable,
           billTypes: createdBillTypes,
+          gender: room.gender,
         },
       },
       { status: 201 },
@@ -200,6 +192,7 @@ export async function PUT(request: Request) {
         description,
         images,
         isAvailable,
+        gender,
       } = roomData;
 
       // Verify boarding belongs to user
@@ -221,6 +214,7 @@ export async function PUT(request: Request) {
           description,
           images,
           isAvailable: isAvailable !== undefined ? isAvailable : true,
+          gender,
         },
         { new: true, runValidators: true },
       ).lean();
@@ -235,6 +229,7 @@ export async function PUT(request: Request) {
           description: room.description,
           images: room.images,
           isAvailable: room.isAvailable,
+          gender: room.gender,
         });
       }
     }
@@ -248,8 +243,6 @@ export async function PUT(request: Request) {
         isAvailable: hasAvailableRoom,
       });
     }
-
-    console.log("Updated rooms:", updatedRooms);
 
     return NextResponse.json(
       { success: true, rooms: updatedRooms },

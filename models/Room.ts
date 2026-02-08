@@ -21,6 +21,12 @@ const RoomSchema = new Schema(
       required: [true, "Price is required"],
       min: [0, "Price cannot be negative"],
     },
+    gender: {
+      type: String,
+      enum: ["Male", "Female"],
+      default: "Male",
+      required: [true, "Gender is required"],
+    },
     description: {
       type: String,
       default: "",
@@ -45,7 +51,7 @@ const RoomSchema = new Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 const Room = models.Room || model("Room", RoomSchema);

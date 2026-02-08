@@ -71,14 +71,13 @@ const BillingTab: React.FC<BillingTabProps> = ({
     Record<string, string>
   >({});
 
-  const selectedBoarding = boardings.find((b) => b.id === selectedBoardingId);
-  const selectedBoardingRooms = rooms.filter(
-    (r) => r.boardingId === selectedBoardingId,
-  );
+  const selectedBoarding = boardings?.find((b) => b.id === selectedBoardingId);
+  const selectedBoardingRooms =
+    rooms?.filter((r) => r.boardingId === selectedBoardingId) || [];
 
   const getRoomBillData = (roomId: string) => {
     return (
-      roomBills.find(
+      roomBills?.find(
         (bill) => bill.roomId === roomId && bill.month === selectedMonth,
       ) || {
         roomId,
@@ -88,6 +87,15 @@ const BillingTab: React.FC<BillingTabProps> = ({
       }
     );
   };
+
+  // Handle loading state
+  if (!boardings || !rooms) {
+    return (
+      <div className="bg-backgroundSecondary p-8 rounded-xl border border-borderPrimary text-center">
+        <p className="text-textSecondary">Loading boarding data...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

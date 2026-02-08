@@ -9,6 +9,7 @@ interface Boarding {
   description: string;
   mainImage: string | null;
   totalRooms?: number;
+  isAvailable?: boolean;
   nearestUniversity?: string;
   distanceFromUniversity?: number;
 }
@@ -78,11 +79,27 @@ const GeneralInfoTab: React.FC<GeneralInfoTabProps> = ({
                 <div
                   key={boarding.id}
                   onClick={() => setSelectedBoardingId(boarding.id)}
-                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${selectedBoardingId === boarding.id
-                    ? "border-primary bg-primary/5"
-                    : "border-borderPrimary hover:border-primary/50"
-                    }`}
+
+                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all relative ${
+                    selectedBoardingId === boarding.id
+                      ? "border-primary bg-primary/5"
+                      : "border-borderPrimary hover:border-primary/50"
+                  }`}
+
+                  
                 >
+                  {/* Availability Badge */}
+                  <div
+                    className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium ${
+                      boarding.isAvailable !== false
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
+                  >
+                    {boarding.isAvailable !== false
+                      ? "Available"
+                      : "Unavailable"}
+                  </div>
                   {boarding.mainImage ? (
                     <img
                       src={boarding.mainImage}

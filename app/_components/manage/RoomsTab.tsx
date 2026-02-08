@@ -18,7 +18,7 @@ interface Room {
   price: number;
   description: string;
   images: string[];
-  tenants?: Tenant[];
+  isAvailable: boolean;
 }
 
 interface Boarding {
@@ -185,9 +185,37 @@ const RoomsTab: React.FC<RoomsTabProps> = ({
                   className="bg-background p-6 rounded-xl border border-borderPrimary shadow-sm relative group space-y-6"
                 >
                   <div className="flex justify-between items-start">
-                    <h3 className="text-lg font-medium text-textPrimary">
-                      Room Details
-                    </h3>
+                    <div className="flex items-center gap-4">
+                      <h3 className="text-lg font-medium text-textPrimary">
+                        Room Details
+                      </h3>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-textSecondary">
+                          {room.isAvailable ? "Available" : "Unavailable"}
+                        </span>
+                        <button
+                          onClick={() =>
+                            updateRoom(
+                              room.id,
+                              "isAvailable",
+                              !room.isAvailable,
+                            )
+                          }
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                            room.isAvailable ? "bg-primary" : "bg-gray-300"
+                          }`}
+                          title="Toggle availability"
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              room.isAvailable
+                                ? "translate-x-6"
+                                : "translate-x-1"
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    </div>
                     <button
                       onClick={() => removeRoom(room.id)}
                       className="text-red-500 hover:text-red-700 transition-colors p-2 hover:bg-red-50 rounded-full"

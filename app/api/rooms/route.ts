@@ -74,7 +74,25 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { boardingId, name, capacity, price, description, images } = body;
+    const {
+      boardingId,
+      name,
+      capacity,
+      price,
+      description,
+      images,
+      isAvailable,
+    } = body;
+
+    console.log("Creating room with data:", {
+      boardingId,
+      name,
+      capacity,
+      price,
+      description,
+      images,
+      isAvailable,
+    });
 
     // Verify boarding belongs to user
     const boarding = await Boarding.findOne({
@@ -97,6 +115,16 @@ export async function POST(request: Request) {
       price,
       description: description || "",
       images: images || [],
+      isAvailable: isAvailable !== undefined ? isAvailable : true,
+    });
+
+    console.log("Created room:", room);
+
+    // Update boarding availability (if any room is available, boarding is available)
+    const allRooms = await Room.find({ boardingId });
+    const hasAvailableRoom = allRooms.some((r) => r.isAvailable);
+    await Boarding.findByIdAndUpdate(boardingId, {
+      isAvailable: hasAvailableRoom,
     });
 
     // Create default bill types (Electricity and Water)
@@ -163,8 +191,16 @@ export async function PUT(request: Request) {
     const updatedRooms = [];
 
     for (const roomData of rooms) {
-      const { id, boardingId, name, capacity, price, description, images } =
-        roomData;
+      const {
+        id,
+        boardingId,
+        name,
+        capacity,
+        price,
+        description,
+        images,
+        isAvailable,
+      } = roomData;
 
       // Verify boarding belongs to user
       const boarding = await Boarding.findOne({
@@ -184,6 +220,7 @@ export async function PUT(request: Request) {
           price,
           description,
           images,
+          isAvailable: isAvailable !== undefined ? isAvailable : true,
         },
         { new: true, runValidators: true },
       ).lean();
@@ -201,6 +238,18 @@ export async function PUT(request: Request) {
         });
       }
     }
+
+    // Update boarding availability for each affected boarding
+    const boardingIds = [...new Set(rooms.map((r) => r.boardingId))];
+    for (const boardingId of boardingIds) {
+      const allRooms = await Room.find({ boardingId });
+      const hasAvailableRoom = allRooms.some((r) => r.isAvailable);
+      await Boarding.findByIdAndUpdate(boardingId, {
+        isAvailable: hasAvailableRoom,
+      });
+    }
+
+    console.log("Updated rooms:", updatedRooms);
 
     return NextResponse.json(
       { success: true, rooms: updatedRooms },

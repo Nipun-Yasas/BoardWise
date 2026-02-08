@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     const user = await User.findOne({ email });
     if (!user) {
       return NextResponse.json(
-        { message: "If email exists, reset link will be sent" },
+        { message: "Email is not Registered to this Platform" },
         { status: 200 }
       );
     }

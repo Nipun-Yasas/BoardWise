@@ -12,6 +12,7 @@ interface Boarding {
   isAvailable?: boolean;
   nearestUniversity?: string;
   distanceFromUniversity?: number;
+  distanceUnit?: "km" | "m";
 }
 
 interface GeneralInfoTabProps {
@@ -227,16 +228,38 @@ const GeneralInfoTab: React.FC<GeneralInfoTabProps> = ({
                 placeholder="Enter nearest university"
               />
 
-              {/* Distance From University */}
-              <Input
-                label="Distance from University (km)"
-                name="distanceFromUniversity"
-                type="number"
-                value={selectedBoarding.distanceFromUniversity || 0}
-                onChange={handleGeneralChange}
-                placeholder="Enter distance from university"
-                min="0"
-              />
+              {/* Distance From University with Unit */}
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-textPrimary">
+                  Distance from University
+                </label>
+                <div className="flex gap-2">
+                  <Input
+                    name="distanceFromUniversity"
+                    type="number"
+                    value={selectedBoarding.distanceFromUniversity || 0}
+                    onChange={handleGeneralChange}
+                    placeholder="Enter distance"
+                    min="0"
+                    className="flex-1"
+                  />
+                  <select
+                    value={selectedBoarding.distanceUnit || "km"}
+                    onChange={(e) =>
+                      handleGeneralChange({
+                        target: {
+                          name: "distanceUnit",
+                          value: e.target.value,
+                        },
+                      } as any)
+                    }
+                    className="px-3 py-2 text-textSecondary border border-borderPrimary rounded-lg bg-input focus:ring-2 focus:ring-primary outline-none transition-colors min-w-[80px]"
+                  >
+                    <option value="km">km</option>
+                    <option value="m">m</option>
+                  </select>
+                </div>
+              </div>
             </div>
 
             {/* Total Room Capacity (Calculated) */}

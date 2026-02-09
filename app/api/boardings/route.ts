@@ -54,6 +54,9 @@ export async function GET(request: Request) {
           description: boarding.description,
           mainImage: boarding.mainImage,
           totalRooms: boarding.totalRooms || 0,
+          nearestUniversity: boarding.nearestUniversity || "",
+          distanceFromUniversity: boarding.distanceFromUniversity || 0,
+          distanceUnit: boarding.distanceUnit || "km",
           isAvailable:
             boarding.isAvailable !== undefined ? boarding.isAvailable : true,
           rooms: roomsWithBillTypes,
@@ -89,6 +92,7 @@ export async function POST(request: Request) {
       totalRooms,
       nearestUniversity,
       distanceFromUniversity,
+      distanceUnit,
     } = body;
 
     // Validate required fields
@@ -108,6 +112,7 @@ export async function POST(request: Request) {
       totalRooms: totalRooms || 0,
       nearestUniversity: nearestUniversity || "",
       distanceFromUniversity: distanceFromUniversity || 0,
+      distanceUnit: distanceUnit || "km",
     });
 
     return NextResponse.json(
@@ -121,6 +126,7 @@ export async function POST(request: Request) {
           totalRooms: boarding.totalRooms || 0,
           nearestUniversity: boarding.nearestUniversity || "",
           distanceFromUniversity: boarding.distanceFromUniversity || 0,
+          distanceUnit: boarding.distanceUnit || "km",
           rooms: [],
         },
       },

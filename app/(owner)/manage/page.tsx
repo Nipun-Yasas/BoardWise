@@ -32,6 +32,7 @@ interface Boarding {
   totalRooms?: number;
   nearestUniversity?: string;
   distanceFromUniversity?: number;
+  distanceUnit?: "km" | "m";
   rooms: Room[];
 }
 
@@ -172,6 +173,7 @@ export default function Manage() {
           totalRooms: selectedBoarding.totalRooms || 0,
           nearestUniversity: selectedBoarding.nearestUniversity || "",
           distanceFromUniversity: selectedBoarding.distanceFromUniversity || 0,
+          distanceUnit: selectedBoarding.distanceUnit || "km",
         });
 
         // Extract boarding from nested response
@@ -202,6 +204,7 @@ export default function Manage() {
             totalRooms: selectedBoarding.totalRooms || 0,
             nearestUniversity: selectedBoarding.nearestUniversity || "",
             distanceFromUniversity: selectedBoarding.distanceFromUniversity || 0,
+            distanceUnit: selectedBoarding.distanceUnit || "km",
           },
         );
 
@@ -217,6 +220,7 @@ export default function Manage() {
                 totalRooms: selectedBoarding.totalRooms,
                 nearestUniversity: selectedBoarding.nearestUniversity,
                 distanceFromUniversity: selectedBoarding.distanceFromUniversity,
+                distanceUnit: selectedBoarding.distanceUnit,
               }
               : b,
           ),
@@ -289,10 +293,10 @@ export default function Manage() {
     }
   };
   const handleGeneralChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | any,
   ) => {
     const { name, value } = e.target;
-    // Convert totalRooms to number
+    // Convert totalRooms and distanceFromUniversity to number
     if (name === "totalRooms" || name === "distanceFromUniversity") {
       updateBoardingInfo(name as keyof Boarding, parseInt(value) || 0);
     } else {

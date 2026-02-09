@@ -5,7 +5,8 @@ import Link from "next/link";
 import BoardingCard, { Boarding } from "@/app/_components/dashboard/BoardingCard";
 import BoardingFilters from "@/app/_components/dashboard/BoardingFilters";
 import { Button } from "@/app/_components/Button";
-import { Home, Search } from "lucide-react";
+import { Home, Search, Sparkles } from "lucide-react";
+import SmartRecommendation from "@/app/_components/student/SmartRecommendation";
 
 
 
@@ -23,6 +24,7 @@ const PRESET_UNIVERSITIES = [
 export default function StudentDashboard() {
   const [boardings, setBoardings] = useState<Boarding[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showSmartRecommendation, setShowSmartRecommendation] = useState(false);
   const [filters, setFilters] = useState({
     search: "",
     university: "",
@@ -95,6 +97,18 @@ export default function StudentDashboard() {
             Discover comfort and convenience near your university
           </p>
         </div>
+
+        {/* AI Smart Recommendation Button */}
+        <button
+          onClick={() => setShowSmartRecommendation(true)}
+          className="group relative px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2"
+        >
+          <Sparkles className="w-5 h-5 group-hover:animate-pulse" />
+          <span>AI Finder</span>
+          <div className="absolute -top-1 -right-1 px-2 py-0.5 bg-yellow-400 text-yellow-900 text-xs font-bold rounded-full animate-bounce">
+            NEW
+          </div>
+        </button>
       </div>
 
       {/* User Boarding Status Banner */}
@@ -151,6 +165,13 @@ export default function StudentDashboard() {
             Try adjusting your filters to find what you&apos;re looking for.
           </p>
         </div>
+      )}
+      
+      {/* Smart Recommendation Modal */}
+      {showSmartRecommendation && (
+        <SmartRecommendation
+          onClose={() => setShowSmartRecommendation(false)}
+        />
       )}
     </div>
   );

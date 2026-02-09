@@ -141,6 +141,7 @@ export async function POST(request: Request) {
       totalRooms,
       nearestUniversity,
       distanceFromUniversity,
+      distanceUnit,
     } = body;
 
     // Validate required fields
@@ -160,6 +161,7 @@ export async function POST(request: Request) {
       totalRooms: totalRooms || 0,
       nearestUniversity: nearestUniversity || "",
       distanceFromUniversity: distanceFromUniversity || 0,
+      distanceUnit: distanceUnit || "km",
     });
 
     return NextResponse.json(
@@ -173,6 +175,7 @@ export async function POST(request: Request) {
           totalRooms: boarding.totalRooms || 0,
           nearestUniversity: boarding.nearestUniversity || "",
           distanceFromUniversity: boarding.distanceFromUniversity || 0,
+          distanceUnit: boarding.distanceUnit || "km",
           rooms: [],
         },
       },

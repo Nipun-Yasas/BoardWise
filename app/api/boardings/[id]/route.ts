@@ -29,6 +29,7 @@ export async function PUT(
       totalRooms,
       nearestUniversity,
       distanceFromUniversity,
+      distanceUnit,
     } = body;
 
     // Find and update boarding
@@ -41,6 +42,7 @@ export async function PUT(
         totalRooms: totalRooms || 0,
         nearestUniversity: nearestUniversity || "",
         distanceFromUniversity: distanceFromUniversity || 0,
+        distanceUnit: distanceUnit || "km",
       },
       { new: true, runValidators: true },
     );
@@ -63,6 +65,7 @@ export async function PUT(
           totalRooms: boarding.totalRooms || 0,
           nearestUniversity: boarding.nearestUniversity || "",
           distanceFromUniversity: boarding.distanceFromUniversity || 0,
+          distanceUnit: boarding.distanceUnit || "km",
         },
       },
       { status: 200 },

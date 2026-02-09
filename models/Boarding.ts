@@ -43,6 +43,11 @@ const BoardingSchema = new Schema(
       type: Number,
       default: 0,
     },
+    distanceUnit: {
+      type: String,
+      enum: ["km", "m"],
+      default: "km",
+    },
   },
   {
     timestamps: true,

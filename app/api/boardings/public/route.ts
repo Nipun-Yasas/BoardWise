@@ -8,68 +8,100 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   await connectDB();
   try {
-    // Fetch all boardings
-    const boardings = await Boarding.find({}).sort({ createdAt: -1 }).lean();
+    // Optimized Aggregation Pipeline
+    const boardingsWithStats = await Boarding.aggregate([
+      // 1. Join with Rooms
+      {
+        $lookup: {
+          from: "rooms",
+          localField: "_id",
+          foreignField: "boardingId",
+          as: "rooms",
+        },
+      },
+      // 2. Project only needed fields and calculate simple stats if possible,
+      //    or just return the joined data for JS processing (easier for complex logic)
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          description: 1,
+          mainImage: 1,
+          nearestUniversity: 1,
+          city: 1,
+          distanceFromUniversity: 1,
+          address: 1,
+          totalRooms: 1,
+          rooms: {
+            price: 1,
+            capacity: 1,
+            isAvailable: 1,
+            tenants: 1,
+            gender: 1,
+          },
+        },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+    ]);
 
-    // Fetch rooms for each boarding to calculate stats
-    const boardingsWithStats = await Promise.all(
-      boardings.map(async (boarding) => {
-        const rooms = await Room.find({ boardingId: boarding._id }).lean();
+    // Process the results efficiently in memory (one pass)
+    const formattedBoardings = boardingsWithStats.map((boarding) => {
+      const rooms = boarding.rooms || [];
 
-        // Calculate stats
-        // Filter available rooms (manually available AND has space)
-        const availableRooms = rooms.filter(
-          (r) =>
-            r.isAvailable !== false && (r.tenants?.length || 0) < r.capacity,
-        );
+      // Logic: Filter manually available rooms
+      const availableRooms = rooms.filter((r: any) => {
+        const occupied = r.tenants?.length || 0;
+        const capacity = r.capacity || 0;
+        // Room is available AND has valid capacity > occupied
+        return r.isAvailable !== false && occupied < capacity;
+      });
 
-        const minPrice =
-          availableRooms.length > 0
-            ? Math.min(...availableRooms.map((r) => r.price))
-            : rooms.length > 0
-              ? Math.min(...rooms.map((r) => r.price))
-              : 0; // Fallback to any room if none available
+      // Min Price calculation
+      const prices = (availableRooms.length > 0 ? availableRooms : rooms).map(
+        (r: any) => r.price,
+      );
+      const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
 
-        // Capacity = Total available slots
-        const totalAvailableSlots = rooms.reduce((acc, room) => {
-          const occupied = room.tenants?.length || 0;
-          const capacity = room.capacity || 0;
-          const available =
-            room.isAvailable !== false ? Math.max(0, capacity - occupied) : 0;
-          return acc + available;
-        }, 0);
+      // Total Available Slots calculation
+      const totalAvailableSlots = rooms.reduce((acc: number, room: any) => {
+        const occupied = room.tenants?.length || 0;
+        const capacity = room.capacity || 0;
+        const available =
+          room.isAvailable !== false ? Math.max(0, capacity - occupied) : 0;
+        return acc + available;
+      }, 0);
 
-        // Calculate boarding gender
-        const genders = rooms.map((r) => r.gender || "Male");
-        const hasMale = genders.includes("Male");
-        const hasFemale = genders.includes("Female");
-        let gender = "Male";
-        if (hasMale && hasFemale) {
-          gender = "Mixed";
-        } else if (hasFemale) {
-          gender = "Female";
-        }
+      // Gender Logic
+      const genders = rooms.map((r: any) => r.gender || "Male");
+      const hasMale = genders.includes("Male");
+      const hasFemale = genders.includes("Female");
+      let gender = "Male";
+      if (hasMale && hasFemale) {
+        gender = "Mixed";
+      } else if (hasFemale) {
+        gender = "Female";
+      }
 
-        return {
-          id: boarding._id.toString(),
-          title: boarding.name,
-          university: boarding.nearestUniversity || boarding.city || "Unknown", // Fallback to city as university
-          distance: boarding.distanceFromUniversity || 0,
-          rental: minPrice,
-          persons: totalAvailableSlots, // Use AVAILABLE slots instead of total capacity
-          imageUrl:
-            boarding.mainImage ||
-            "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", // Default image if missing
-          // keeping original fields just in case
-          description: boarding.description,
-          address: boarding.address,
-          totalRooms: boarding.totalRooms,
-          gender,
-        };
-      }),
-    );
+      return {
+        id: boarding._id.toString(),
+        title: boarding.name,
+        university: boarding.nearestUniversity || boarding.city || "Unknown",
+        distance: boarding.distanceFromUniversity || 0,
+        rental: minPrice,
+        persons: totalAvailableSlots,
+        imageUrl:
+          boarding.mainImage ||
+          "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+        description: boarding.description,
+        address: boarding.address,
+        totalRooms: boarding.totalRooms,
+        gender,
+      };
+    });
 
-    return NextResponse.json(boardingsWithStats, { status: 200 });
+    return NextResponse.json(formattedBoardings, { status: 200 });
   } catch (error) {
     console.error("Fetch local boardings error:", error);
     return NextResponse.json(

@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { StatCard } from "@/app/_components/dashboard/StatCard";
 import { RevenueChart } from "@/app/_components/dashboard/RevenueChart";
 import { Building2, CreditCard, DollarSign, Users } from "lucide-react";
 import axiosInstance, { API_PATHS } from "@/lib/axios";
+import useSWR from "swr";
 
 interface DashboardStats {
   totalRevenue: number;
@@ -17,33 +17,13 @@ interface DashboardStats {
   chartData: { name: string; total: number }[];
 }
 
+const fetcher = (url: string) => axiosInstance.get(url).then((res) => res.data);
+
 export default function OwnerDashboard() {
-  const [stats, setStats] = useState<DashboardStats>({
-    totalRevenue: 0,
-    revenueTrend: 0,
-    activeMembers: 0,
-    activeMembersTrend: 0,
-    totalRooms: 0,
-    operationalBills: 0,
-    operationalBillsTrend: 0,
-    chartData: [],
-  });
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchStats() {
-      try {
-        const response = await axiosInstance.get(API_PATHS.DASHBOARD.STATS);
-        setStats(response.data);
-      } catch (error) {
-        console.error("Error fetching dashboard stats:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchStats();
-  }, []);
+  const { data: stats, error, isLoading } = useSWR<DashboardStats>(
+    API_PATHS.DASHBOARD.OWNER,
+    fetcher
+  );
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-LK", {
@@ -61,6 +41,17 @@ export default function OwnerDashboard() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 flex items-center justify-center min-h-[50vh]">
+        <p className="text-red-500">Failed to load dashboard data.</p>
+      </div>
+    );
+  }
+
+  // Safe default in case stats is undefined (though isLoading handles initial load)
+  if (!stats) return null;
+
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
@@ -72,7 +63,7 @@ export default function OwnerDashboard() {
           value={formatCurrency(stats.totalRevenue)}
           icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
           trend={{
-            value: stats.revenueTrend,
+            value: stats.revenueTrend || 0,
             label: "from last month",
             positive: stats.revenueTrend >= 0,
           }}
@@ -83,7 +74,7 @@ export default function OwnerDashboard() {
           value={`+${stats.activeMembers}`}
           icon={<Users className="h-4 w-4 text-muted-foreground" />}
           trend={{
-            value: stats.activeMembersTrend,
+            value: stats.activeMembersTrend || 0,
             label: "from last month",
             positive: stats.activeMembersTrend >= 0,
           }}
@@ -100,9 +91,9 @@ export default function OwnerDashboard() {
           value={formatCurrency(stats.operationalBills)}
           icon={<CreditCard className="h-4 w-4 text-muted-foreground" />}
           trend={{
-            value: stats.operationalBillsTrend,
+            value: stats.operationalBillsTrend || 0,
             label: "from last month",
-            positive: stats.operationalBillsTrend <= 0, // Lower bills is usually positive, but let's stick to trend direction
+            positive: stats.operationalBillsTrend <= 0,
           }}
           description="from last month"
         />

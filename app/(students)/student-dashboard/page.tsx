@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
+import useSWR from "swr";
 import BoardingCard, { Boarding } from "@/app/_components/dashboard/BoardingCard";
 import BoardingFilters from "@/app/_components/dashboard/BoardingFilters";
 import { Button } from "@/app/_components/Button";
 import { Home, Search } from "lucide-react";
-
-
+import axiosInstance, { API_PATHS } from "@/lib/axios";
 
 // Mock User Status
 const USER_HAS_BOARDING = true; // Toggle this to test
@@ -20,9 +20,15 @@ const PRESET_UNIVERSITIES = [
   "SLIIT",
 ];
 
+// fetcher for SWR
+const fetcher = (url: string) => axiosInstance.get(url).then((res) => res.data);
+
 export default function StudentDashboard() {
-  const [boardings, setBoardings] = useState<Boarding[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: boardings = [], error, isLoading } = useSWR<Boarding[]>(
+    API_PATHS.DASHBOARD.STUDENT,
+    fetcher
+  );
+
   const [filters, setFilters] = useState({
     search: "",
     university: "",
@@ -31,22 +37,7 @@ export default function StudentDashboard() {
     persons: "",
   });
 
-  useEffect(() => {
-    async function fetchBoardings() {
-      try {
-        const res = await fetch("/api/boardings/public");
-        if (res.ok) {
-          const data = await res.json();
-          setBoardings(data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch boardings:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchBoardings();
-  }, []);
+  // Removed manual useEffect fetching
 
   const handleFilterChange = (key: string, value: string | number) => {
     setFilters((prev) => ({ ...prev, [key]: value }));

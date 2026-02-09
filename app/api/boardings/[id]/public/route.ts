@@ -13,7 +13,30 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const boarding = await Boarding.findById(id).lean();
+    // Validate Object ID
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      return NextResponse.json(
+        { error: "Invalid Boarding ID" },
+        { status: 400 },
+      );
+    }
+
+    const [boarding] = await Boarding.aggregate([
+      {
+        $match: { _id: new (require("mongoose").Types.ObjectId)(id) },
+      },
+      {
+        $lookup: {
+          from: "rooms",
+          localField: "_id",
+          foreignField: "boardingId",
+          as: "rooms",
+        },
+      },
+      {
+        $limit: 1, // Optimization: stop after finding one
+      },
+    ]);
 
     if (!boarding) {
       return NextResponse.json(
@@ -21,8 +44,6 @@ export async function GET(
         { status: 404 },
       );
     }
-
-    const rooms = await Room.find({ boardingId: id }).lean();
 
     const boardingWithRooms = {
       id: boarding._id.toString(),
@@ -35,7 +56,7 @@ export async function GET(
         boarding.mainImage ||
         "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
       totalRooms: boarding.totalRooms,
-      rooms: rooms.map((room) => ({
+      rooms: (boarding.rooms || []).map((room: any) => ({
         id: room._id.toString(),
         name: room.name,
         price: room.price,
@@ -43,6 +64,7 @@ export async function GET(
         description: room.description,
         isAvailable: room.isAvailable,
         images: room.images || [],
+        gender: room.gender || "Any",
       })),
     };
 

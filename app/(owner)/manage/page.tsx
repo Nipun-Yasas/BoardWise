@@ -6,7 +6,11 @@ import RoomsTab from "@/app/_components/manage/RoomsTab";
 import axiosInstance, { API_PATHS } from "@/lib/axios";
 import { Box, CreditCard, Home } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import useSWR, { mutate } from "swr";
 import { toast } from "sonner";
+
+// Fetcher for SWR
+const fetcher = (url: string) => axiosInstance.get(url).then((res) => res.data);
 
 interface BillType {
   id: string;
@@ -73,69 +77,83 @@ export default function Manage() {
       0,
     ) || 0;
 
-  // Fetch boardings on mount
-  useEffect(() => {
-    fetchBoardings();
-  }, []);
-
-  // Fetch monthly bills when boarding or month changes
-  useEffect(() => {
-    if (selectedBoardingId && !selectedBoardingId.startsWith("temp-")) {
-      fetchMonthlyBills();
-    }
-  }, [selectedBoardingId, selectedMonth]);
-
-  const fetchBoardings = async () => {
-    try {
-      setLoading(true);
-      const response = await axiosInstance.get(API_PATHS.BOARDING.GET_ALL);
-      const fetchedBoardings = response.data;
-
-      if (fetchedBoardings.length > 0) {
-        // Ensure all rooms have bill types array initialized
-        const boardingsWithBillTypes = fetchedBoardings.map(
-          (boarding: Boarding) => ({
-            ...boarding,
-            rooms: boarding.rooms.map((room: Room) => ({
-              ...room,
-              billTypes: room.billTypes || [],
-            })),
-          }),
-        );
-
-        setBoardings(boardingsWithBillTypes);
-        setSelectedBoardingId(boardingsWithBillTypes[0].id);
-      } else {
-        // No boardings yet, create empty state
-        setBoardings([]);
-        setSelectedBoardingId("");
+  // SWR for Boardings
+  const { data: fetchedBoardings, error: boardingsError, isLoading: boardingsLoading, mutate: mutateBoardings } = useSWR(
+    API_PATHS.BOARDING.GET_ALL,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      onSuccess: (data) => {
+        // Sync to local state only if not already editing?
+        // For simplicity in this refactor, we sync when data arrives, assuming mainly on mount or explicit mutation.
+        if (data && data.length > 0) {
+          const boardingsWithBillTypes = data.map(
+            (boarding: Boarding) => ({
+              ...boarding,
+              rooms: boarding.rooms.map((room: Room) => ({
+                ...room,
+                billTypes: room.billTypes || [],
+              })),
+            }),
+          );
+          setBoardings(boardingsWithBillTypes);
+          if (!selectedBoardingId) {
+            setSelectedBoardingId(boardingsWithBillTypes[0].id);
+          }
+        } else if (data && data.length === 0) {
+          setBoardings([]);
+          setSelectedBoardingId("");
+        }
+        setLoading(false);
+      },
+      onError: (err) => {
+        console.error("Error fetching boardings:", err);
+        toast.error("Failed to load boardings");
+        setLoading(false);
       }
-    } catch (error: any) {
-      console.error("Error fetching boardings:", error);
-      toast.error("Failed to load boardings");
-    } finally {
+    }
+  );
+
+
+  // SWR for Monthly Bills
+  const billsKey = (selectedBoardingId && !selectedBoardingId.startsWith("temp-"))
+    ? API_PATHS.MONTHLY_BILL.GET_ALL(selectedBoardingId, selectedMonth)
+    : null;
+
+  const { data: fetchedBills, mutate: mutateBills } = useSWR(
+    billsKey,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      onSuccess: (data) => {
+        setRoomBills(data);
+      },
+      onError: (err) => {
+        console.error("Error fetching monthly bills:", err);
+        // Don't show error toast for empty results (404)
+        if (err.response?.status !== 404) {
+          console.log("No bills found for this month");
+        }
+      }
+    }
+  );
+
+  // Initial loading state handled by SWR onSuccess/onError or effect
+  // But we also have local loading state for UI.
+  // We can sync them or just rely on SWR's isLoading for initial load.
+  // Currently `loading` state is used for the spinner.
+  useEffect(() => {
+    if (boardingsLoading) {
+      setLoading(true);
+    } else {
       setLoading(false);
     }
-  };
+  }, [boardingsLoading]);
 
-  const fetchMonthlyBills = async () => {
-    if (!selectedBoardingId || selectedBoardingId.startsWith("temp-")) return;
-
-    try {
-      const response = await axiosInstance.get(
-        API_PATHS.MONTHLY_BILL.GET_ALL(selectedBoardingId, selectedMonth),
-      );
-
-      const fetchedBills = response.data;
-      setRoomBills(fetchedBills);
-    } catch (error: any) {
-      console.error("Error fetching monthly bills:", error);
-      // Don't show error toast for empty results
-      if (error.response?.status !== 404) {
-        console.log("No bills found for this month");
-      }
-    }
-  };
+  // We don't need the manual fetch functions anymore, but 'fetchBoardings' passed to child components as 'refreshData' might be needed.
+  // We can define a wrapper around mutate.
+  const refreshBoardings = () => mutateBoardings();
+  const refreshBills = () => mutateBills();
 
   // Add new boarding (creates temporary local boarding)
   const addBoarding = () => {
@@ -352,7 +370,7 @@ export default function Manage() {
         });
         toast.success(`Room marked as ${newStatus ? "available" : "unavailable"}`);
         // Refresh boardings to ensure parent boarding availability is synced
-        fetchBoardings();
+        refreshBoardings();
       }
     } catch (error: any) {
       console.error("Error toggling room availability:", error);
@@ -384,7 +402,7 @@ export default function Manage() {
 
       // Refresh boardings if it was a database room
       if (!roomId.startsWith("temp-") && isValidMongoId(roomId)) {
-        await fetchBoardings();
+        await refreshBoardings();
       }
     } catch (error: any) {
       console.error("Error deleting room:", error);
@@ -438,7 +456,7 @@ export default function Manage() {
 
       toast.success("Rooms saved successfully!");
       // Refresh boardings to get updated room data
-      await fetchBoardings();
+      await refreshBoardings();
     } catch (error: any) {
       console.error("Error saving rooms:", error);
       toast.error(error.response?.data?.error || "Failed to save rooms");
@@ -668,7 +686,7 @@ export default function Manage() {
           : "all rooms";
         toast.success(`Bills saved for ${roomName}!`);
         // Refresh monthly bills after saving
-        await fetchMonthlyBills();
+        await refreshBills();
       }
     } catch (error: any) {
       console.error("Error saving monthly bills:", error);
@@ -718,7 +736,7 @@ export default function Manage() {
             saving={saving}
             addRoomImage={addRoomImage}
             removeRoomImage={removeRoomImage}
-            refreshData={fetchBoardings}
+            refreshData={refreshBoardings}
             toggleRoomAvailability={toggleRoomAvailability}
           />
         );

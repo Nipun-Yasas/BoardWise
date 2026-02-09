@@ -15,53 +15,103 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Fetch boardings with rooms
-    const boardings = await Boarding.find({ ownerId: session.userId })
-      .sort({ createdAt: -1 })
-      .lean();
+    const { ObjectId } = require("mongoose").Types;
 
-    // Fetch rooms for each boarding with bill types
-    const boardingsWithRooms = await Promise.all(
-      boardings.map(async (boarding) => {
-        const rooms = await Room.find({ boardingId: boarding._id })
-          .populate("tenants", "name email mobile_number")
-          .lean();
-
-        const roomsWithBillTypes = await Promise.all(
-          rooms.map(async (room) => {
-            const billTypes = await BillType.find({ roomId: room._id }).lean();
-            return {
-              id: room._id.toString(),
-              boardingId: room.boardingId.toString(),
-              name: room.name,
-              capacity: room.capacity,
-              price: room.price,
-              description: room.description,
-              images: room.images,
-              isAvailable:
-                room.isAvailable !== undefined ? room.isAvailable : true,
-              gender: room.gender || "Male",
-              tenants: room.tenants || [],
-              billTypes: billTypes.map((bt) => ({
-                id: bt._id.toString(),
-                name: bt.name,
-              })),
-            };
-          }),
-        );
-
-        return {
-          id: boarding._id.toString(),
-          name: boarding.name,
-          description: boarding.description,
-          mainImage: boarding.mainImage,
-          totalRooms: boarding.totalRooms || 0,
-          isAvailable:
-            boarding.isAvailable !== undefined ? boarding.isAvailable : true,
-          rooms: roomsWithBillTypes,
-        };
-      }),
-    );
+    const boardingsWithRooms = await Boarding.aggregate([
+      {
+        $match: { ownerId: new ObjectId(session.userId) },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+      {
+        $lookup: {
+          from: "rooms",
+          let: { boardingId: "$_id" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$boardingId", "$$boardingId"] } } },
+            {
+              $lookup: {
+                from: "billtypes",
+                localField: "_id",
+                foreignField: "roomId",
+                as: "billTypes",
+              },
+            },
+            {
+              $lookup: {
+                from: "users", // Assuming 'users' collection for tenants
+                localField: "tenants",
+                foreignField: "_id",
+                as: "tenantsData",
+              },
+            },
+            {
+              $project: {
+                _id: 1,
+                boardingId: 1,
+                name: 1,
+                capacity: 1,
+                price: 1,
+                description: 1,
+                images: 1,
+                isAvailable: { $ifNull: ["$isAvailable", true] },
+                gender: { $ifNull: ["$gender", "Male"] },
+                billTypes: {
+                  $map: {
+                    input: "$billTypes",
+                    as: "bt",
+                    in: { id: { $toString: "$$bt._id" }, name: "$$bt.name" },
+                  },
+                },
+                tenants: {
+                  $map: {
+                    input: "$tenantsData",
+                    as: "tenant",
+                    in: {
+                      _id: "$$tenant._id",
+                      name: "$$tenant.name",
+                      email: "$$tenant.email",
+                      mobile_number: "$$tenant.mobile_number",
+                    },
+                  },
+                },
+              },
+            },
+          ],
+          as: "rooms",
+        },
+      },
+      {
+        $project: {
+          id: { $toString: "$_id" },
+          name: 1,
+          description: 1,
+          mainImage: 1,
+          totalRooms: { $ifNull: ["$totalRooms", 0] },
+          isAvailable: { $ifNull: ["$isAvailable", true] },
+          rooms: {
+            $map: {
+              input: "$rooms",
+              as: "room",
+              in: {
+                id: { $toString: "$$room._id" },
+                boardingId: { $toString: "$$room.boardingId" },
+                name: "$$room.name",
+                capacity: "$$room.capacity",
+                price: "$$room.price",
+                description: "$$room.description",
+                images: "$$room.images",
+                isAvailable: "$$room.isAvailable",
+                gender: "$$room.gender",
+                billTypes: "$$room.billTypes",
+                tenants: "$$room.tenants",
+              },
+            },
+          },
+        },
+      },
+    ]);
 
     return NextResponse.json(boardingsWithRooms, { status: 200 });
   } catch (error) {

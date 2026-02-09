@@ -15,10 +15,12 @@ export const API_PATHS = {
     LOGOUT: "/auth/logout",
   },
   PROFILE: {
+    GET: "/users/profile",
     UPDATE: "/users/profile",
   },
   DASHBOARD: {
-    STATS: "/owner-dashboard/stats",
+    OWNER: "/owner-dashboard",
+    STUDENT: "/boardings/public",
   },
   BOARDING: {
     GET_ALL: "/boardings",

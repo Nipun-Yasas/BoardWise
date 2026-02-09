@@ -1,5 +1,7 @@
 "use client";
 
+import useSWR, { mutate } from "swr";
+
 import { useState, useRef, useEffect } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -34,13 +36,15 @@ const ProfileSchema = Yup.object().shape({
     academicYear: Yup.string().optional(),
 });
 
+const fetcher = (url: string) => axiosInstance.get(url).then((res) => res.data);
+
 export default function UserProfile() {
-    const { user, login } = useAuth(); // used to update context if needed, though usually easier to just fetch fresh data
+    const { user } = useAuth();
     const [isEditing, setIsEditing] = useState(false);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [initialData, setInitialData] = useState<any>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const { data: profileData, error, isLoading } = useSWR(API_PATHS.PROFILE.GET, fetcher);
 
     const formik = useFormik({
         initialValues: {
@@ -56,25 +60,19 @@ export default function UserProfile() {
         validationSchema: ProfileSchema,
         onSubmit: async (values) => {
             try {
-                const response = await axiosInstance.put("/api/users/profile", {
+                const response = await axiosInstance.put(API_PATHS.PROFILE.UPDATE, {
                     ...values,
-                    image: previewImage || values.image // Send base64 image if changed
+                    image: previewImage || values.image
                 });
 
                 if (response.data.success) {
                     toast.success("Profile updated successfully");
                     setIsEditing(false);
-                    // Update initial data with the new successful values
-                    setInitialData({
-                        ...values,
-                        image: previewImage || values.image
-                    });
+                    mutate(API_PATHS.PROFILE.GET); // Revalidate SWR
                 }
             } catch (error: any) {
                 console.error("Error updating profile:", error);
                 if (error.response) {
-                    console.error("Server response:", error.response.data);
-                    console.error("Status code:", error.response.status);
                     toast.error(error.response?.data?.error || `Failed: ${error.response.statusText}`);
                 } else {
                     toast.error("Failed to update profile. Network error or server unreachable.");
@@ -83,37 +81,27 @@ export default function UserProfile() {
         },
     });
 
-    const fetchProfile = async () => {
-        try {
-            setLoading(true);
-            const response = await axiosInstance.get(API_PATHS.AUTH.ME);
-            if (response.data.user) {
-                const userData = response.data.user;
-                const formattedData = {
-                    name: userData.name || "",
-                    role: userData.role || "",
-                    email: userData.email || "",
-                    mobile_number: userData.mobile_number || "",
-                    university: userData.university || "",
-                    faculty: userData.faculty || "",
-                    academicYear: userData.academicYear || "",
-                    image: userData.image || null,
-                };
-                formik.setValues(formattedData);
-                setPreviewImage(userData.image || null);
-                setInitialData(formattedData);
-            }
-        } catch (error) {
-            console.error("Error fetching profile:", error);
-            toast.error("Failed to load profile data");
-        } finally {
-            setLoading(false);
-        }
-    };
-
+    // Sync SWR data with Formik
     useEffect(() => {
-        fetchProfile();
-    }, []);
+        if (profileData?.user) {
+            const userData = profileData.user;
+            const formattedData = {
+                name: userData.name || "",
+                role: userData.role || "",
+                email: userData.email || "",
+                mobile_number: userData.mobile_number || "",
+                university: userData.university || "",
+                faculty: userData.faculty || "",
+                academicYear: userData.academicYear || "",
+                image: userData.image || null,
+            };
+            formik.setValues(formattedData);
+            if (!isEditing) {
+                setPreviewImage(userData.image || null);
+            }
+        }
+    }, [profileData, isEditing]); // Re-sync when data changes or editing mode toggles off (cancel)
+
 
     const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -134,16 +122,26 @@ export default function UserProfile() {
 
     const toggleEdit = () => {
         if (isEditing) {
-            // Revert changes using initialData
-            if (initialData) {
-                formik.setValues(initialData);
-                setPreviewImage(initialData.image);
+            // Revert changes using SWR data
+            if (profileData?.user) {
+                const userData = profileData.user;
+                formik.setValues({
+                    name: userData.name || "",
+                    role: userData.role || "",
+                    email: userData.email || "",
+                    mobile_number: userData.mobile_number || "",
+                    university: userData.university || "",
+                    faculty: userData.faculty || "",
+                    academicYear: userData.academicYear || "",
+                    image: userData.image || null,
+                });
+                setPreviewImage(userData.image || null);
             }
         }
         setIsEditing(!isEditing);
     };
 
-    if (loading) {
+    if (isLoading) {
         return <div className="p-10 text-center">Loading profile...</div>;
     }
 

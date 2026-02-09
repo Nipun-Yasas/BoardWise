@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useEffect, useState, use } from "react";
+import { use } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Check, Home, Info, MapPin, Users, Wallet } from "lucide-react";
+import useSWR from "swr";
+import { ArrowLeft, Check, Home, Info, MapPin, User, Users, Wallet } from "lucide-react";
 import { Button } from "@/app/_components/Button";
 
 type Room = {
@@ -14,6 +15,7 @@ type Room = {
     description: string;
     isAvailable: boolean;
     images: string[];
+    gender: string;
 };
 
 type BoardingDetails = {
@@ -28,36 +30,24 @@ type BoardingDetails = {
     rooms: Room[];
 };
 
+// fetcher for SWR
+const fetcher = (url: string) => fetch(url).then((res) => {
+    if (!res.ok) throw new Error("Failed to fetch");
+    return res.json();
+});
+
 export default function BoardingDetailsPage({
     params,
 }: {
     params: Promise<{ id: string }>;
 }) {
     const { id } = use(params);
-    const [boarding, setBoarding] = useState<BoardingDetails | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
+    const { data: boarding, error, isLoading } = useSWR<BoardingDetails>(
+        `/api/boardings/${id}/public`,
+        fetcher
+    );
 
-    useEffect(() => {
-        async function fetchDetails() {
-            try {
-                const res = await fetch(`/api/boardings/${id}/public`);
-                if (!res.ok) {
-                    throw new Error("Failed to fetch details");
-                }
-                const data = await res.json();
-                setBoarding(data);
-            } catch (err) {
-                setError("Could not load boarding details.");
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
-        }
-        fetchDetails();
-    }, [id]);
-
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -147,7 +137,7 @@ export default function BoardingDetailsPage({
                             {boarding.rooms.map((room) => (
                                 <div
                                     key={room.id}
-                                    className="bg-backgroundSecondary rounded-2xl overflow-hidden border border-borderPrimary shadow-sm hover:shadow-md transition-all duration-300 flex flex-col"
+                                    className="bg-backgroundSecondary rounded-2xl mb-5 overflow-hidden border border-borderPrimary shadow-sm hover:shadow-md transition-all duration-300 flex flex-col"
                                 >
                                     <div className="h-48 w-full bg-gray-200 relative">
                                         {room.images && room.images.length > 0 ? (
@@ -177,6 +167,15 @@ export default function BoardingDetailsPage({
                                                     Available
                                                 </div>
                                             </div>
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <div className={`text-xs px-2 py-0.5 rounded-full font-medium flex items-center gap-1 
+                                                    ${room.gender === 'Male' ? 'bg-blue-100 text-blue-700' :
+                                                        room.gender === 'Female' ? 'bg-pink-100 text-pink-700' :
+                                                            'bg-gray-100 text-gray-700'}`}>
+                                                    <User className="w-3 h-3" />
+                                                    {room.gender}
+                                                </div>
+                                            </div>
                                             <p className="text-textSecondary text-sm line-clamp-2">{room.description}</p>
                                         </div>
 
@@ -192,9 +191,7 @@ export default function BoardingDetailsPage({
                                                 </div>
                                             </div>
 
-                                            <Button className="w-full justify-center" disabled={!room.isAvailable}>
-                                                {room.isAvailable ? "Request to Book" : "Currently Unavailable"}
-                                            </Button>
+
                                         </div>
                                     </div>
                                 </div>

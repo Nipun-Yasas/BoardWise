@@ -2,12 +2,13 @@
 
 import BillingTab from "@/app/_components/manage/BillingTab";
 import GeneralInfoTab from "@/app/_components/manage/GeneralInfoTab";
+import RentTracker from "@/app/_components/manage/RentTracker";
 import RoomsTab from "@/app/_components/manage/RoomsTab";
 import axiosInstance, { API_PATHS } from "@/lib/axios";
 import { Box, CreditCard, Home } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import useSWR, { mutate } from "swr";
 import { toast } from "sonner";
+import useSWR from "swr";
 
 // Fetcher for SWR
 const fetcher = (url: string) => axiosInstance.get(url).then((res) => res.data);
@@ -62,6 +63,9 @@ export default function Manage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingRoomId, setSavingRoomId] = useState<string | null>(null);
+  const [rentTrackerBoardingId, setRentTrackerBoardingId] = useState<
+    string | null
+  >(null);
 
   const [boardings, setBoardings] = useState<Boarding[]>([]);
   const [selectedBoardingId, setSelectedBoardingId] = useState<string>("");
@@ -79,47 +83,46 @@ export default function Manage() {
     ) || 0;
 
   // SWR for Boardings
-  const { data: fetchedBoardings, error: boardingsError, isLoading: boardingsLoading, mutate: mutateBoardings } = useSWR(
-    API_PATHS.BOARDING.GET_ALL,
-    fetcher,
-    {
-      revalidateOnFocus: false,
-      onSuccess: (data) => {
-        // Sync to local state only if not already editing?
-        // For simplicity in this refactor, we sync when data arrives, assuming mainly on mount or explicit mutation.
-        if (data && data.length > 0) {
-          const boardingsWithBillTypes = data.map(
-            (boarding: Boarding) => ({
-              ...boarding,
-              rooms: boarding.rooms.map((room: Room) => ({
-                ...room,
-                billTypes: room.billTypes || [],
-              })),
-            }),
-          );
-          setBoardings(boardingsWithBillTypes);
-          if (!selectedBoardingId) {
-            setSelectedBoardingId(boardingsWithBillTypes[0].id);
-          }
-        } else if (data && data.length === 0) {
-          setBoardings([]);
-          setSelectedBoardingId("");
+  const {
+    data: fetchedBoardings,
+    error: boardingsError,
+    isLoading: boardingsLoading,
+    mutate: mutateBoardings,
+  } = useSWR(API_PATHS.BOARDING.GET_ALL, fetcher, {
+    revalidateOnFocus: false,
+    onSuccess: (data) => {
+      // Sync to local state only if not already editing?
+      // For simplicity in this refactor, we sync when data arrives, assuming mainly on mount or explicit mutation.
+      if (data && data.length > 0) {
+        const boardingsWithBillTypes = data.map((boarding: Boarding) => ({
+          ...boarding,
+          rooms: boarding.rooms.map((room: Room) => ({
+            ...room,
+            billTypes: room.billTypes || [],
+          })),
+        }));
+        setBoardings(boardingsWithBillTypes);
+        if (!selectedBoardingId) {
+          setSelectedBoardingId(boardingsWithBillTypes[0].id);
         }
-        setLoading(false);
-      },
-      onError: (err) => {
-        console.error("Error fetching boardings:", err);
-        toast.error("Failed to load boardings");
-        setLoading(false);
+      } else if (data && data.length === 0) {
+        setBoardings([]);
+        setSelectedBoardingId("");
       }
-    }
-  );
-
+      setLoading(false);
+    },
+    onError: (err) => {
+      console.error("Error fetching boardings:", err);
+      toast.error("Failed to load boardings");
+      setLoading(false);
+    },
+  });
 
   // SWR for Monthly Bills
-  const billsKey = (selectedBoardingId && !selectedBoardingId.startsWith("temp-"))
-    ? API_PATHS.MONTHLY_BILL.GET_ALL(selectedBoardingId, selectedMonth)
-    : null;
+  const billsKey =
+    selectedBoardingId && !selectedBoardingId.startsWith("temp-")
+      ? API_PATHS.MONTHLY_BILL.GET_ALL(selectedBoardingId, selectedMonth)
+      : null;
 
   const { data: fetchedBills, mutate: mutateBills } = useSWR(
     billsKey,
@@ -135,8 +138,8 @@ export default function Manage() {
         if (err.response?.status !== 404) {
           console.log("No bills found for this month");
         }
-      }
-    }
+      },
+    },
   );
 
   // Initial loading state handled by SWR onSuccess/onError or effect
@@ -155,6 +158,11 @@ export default function Manage() {
   // We can define a wrapper around mutate.
   const refreshBoardings = () => mutateBoardings();
   const refreshBills = () => mutateBills();
+
+  const handleOpenRentTracker = (boardingId: string) => {
+    setRentTrackerBoardingId(boardingId);
+    setSelectedBoardingId(boardingId);
+  };
 
   // Add new boarding (creates temporary local boarding)
   const addBoarding = () => {
@@ -214,6 +222,8 @@ export default function Manage() {
         setBoardings(updatedBoardings);
         setSelectedBoardingId(createdBoarding.id);
         toast.success("Saved successfully");
+        // Refresh boardings from API to ensure all fields persist on reload
+        await refreshBoardings();
       } else {
         // Update existing boarding
         await axiosInstance.put(
@@ -224,29 +234,15 @@ export default function Manage() {
             mainImage: selectedBoarding.mainImage,
             totalRooms: selectedBoarding.totalRooms || 0,
             nearestUniversity: selectedBoarding.nearestUniversity || "",
-            distanceFromUniversity: selectedBoarding.distanceFromUniversity || 0,
+            distanceFromUniversity:
+              selectedBoarding.distanceFromUniversity || 0,
             distanceUnit: selectedBoarding.distanceUnit || "km",
           },
         );
 
-        // Update the boarding in the local state
-        setBoardings(
-          boardings.map((b) =>
-            b.id === selectedBoarding.id
-              ? {
-                ...b,
-                name: selectedBoarding.name,
-                description: selectedBoarding.description,
-                mainImage: selectedBoarding.mainImage,
-                totalRooms: selectedBoarding.totalRooms,
-                nearestUniversity: selectedBoarding.nearestUniversity,
-                distanceFromUniversity: selectedBoarding.distanceFromUniversity,
-                distanceUnit: selectedBoarding.distanceUnit,
-              }
-              : b,
-          ),
-        );
         toast.success("Saved successfully");
+        // Refresh boardings from API to ensure all fields persist on reload
+        await refreshBoardings();
       }
     } catch (error: any) {
       console.error("Error saving boarding:", error);
@@ -289,7 +285,8 @@ export default function Manage() {
               mainImage: null,
               totalRooms: currentBoarding.totalRooms || 0,
               nearestUniversity: currentBoarding.nearestUniversity || "",
-              distanceFromUniversity: currentBoarding.distanceFromUniversity || 0,
+              distanceFromUniversity:
+                currentBoarding.distanceFromUniversity || 0,
             },
           );
           toast.success("Image removed successfully!");
@@ -354,7 +351,10 @@ export default function Manage() {
     updateBoardingInfo("rooms", updatedRooms);
   };
 
-  const toggleRoomAvailability = async (roomId: string, currentStatus: boolean) => {
+  const toggleRoomAvailability = async (
+    roomId: string,
+    currentStatus: boolean,
+  ) => {
     if (!selectedBoarding) return;
 
     // Optimistic update
@@ -372,7 +372,9 @@ export default function Manage() {
         await axiosInstance.patch(API_PATHS.ROOM.UPDATE(roomId), {
           isAvailable: newStatus,
         });
-        toast.success(`Room marked as ${newStatus ? "available" : "unavailable"}`);
+        toast.success(
+          `Room marked as ${newStatus ? "available" : "unavailable"}`,
+        );
         // Refresh boardings to ensure parent boarding availability is synced
         refreshBoardings();
       }
@@ -724,6 +726,7 @@ export default function Manage() {
             addBoarding={addBoarding}
             saveBoardingDetails={saveBoardingDetails}
             saving={saving}
+            onOpenRentTracker={handleOpenRentTracker}
           />
         );
       case "rooms":
@@ -788,10 +791,11 @@ export default function Manage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-t-lg font-medium transition-colors whitespace-nowrap ${activeTab === tab.id
-                ? "bg-backgroundSecondary text-primary"
-                : "text-textSecondary hover:text-textPrimary hover:bg-backgroundSecondary/50"
-                }`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-t-lg font-medium transition-colors whitespace-nowrap ${
+                activeTab === tab.id
+                  ? "bg-backgroundSecondary text-primary"
+                  : "text-textSecondary hover:text-textPrimary hover:bg-backgroundSecondary/50"
+              }`}
               suppressHydrationWarning
             >
               {tab.icon}
@@ -801,6 +805,38 @@ export default function Manage() {
         </div>
 
         <div className="min-h-[500px]">{renderTabContent()}</div>
+
+        {/* Rent Tracker Modal */}
+        {rentTrackerBoardingId && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 flex items-center justify-center p-4">
+            <div className="bg-background rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center p-6 border-b border-borderPrimary sticky top-0 bg-backgroundSecondary">
+                <h2 className="text-xl font-semibold text-textPrimary">
+                  Rent Tracker -{" "}
+                  {boardings.find((b) => b.id === rentTrackerBoardingId)?.name}
+                </h2>
+                <button
+                  onClick={() => setRentTrackerBoardingId(null)}
+                  className="text-textSecondary hover:text-textPrimary transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="p-6">
+                <RentTracker
+                  boardings={boardings}
+                  selectedBoardingId={rentTrackerBoardingId}
+                  rooms={
+                    boardings.find((b) => b.id === rentTrackerBoardingId)
+                      ?.rooms || []
+                  }
+                  selectedMonth={selectedMonth}
+                  setSelectedMonth={setSelectedMonth}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -47,6 +47,11 @@ export const API_PATHS = {
         : `/monthly-bills?boardingId=${boardingId}`,
     SAVE: "/monthly-bills",
   },
+  RENT_PAYMENT: {
+    GET_ALL: (roomId: string, month: string) => `/rent-payments?roomId=${roomId}&month=${month}`,
+    CREATE: "/rent-payments",
+    UPDATE: (id: string) => `/rent-payments/${id}`,
+  },
 };
 
 export default axiosInstance;

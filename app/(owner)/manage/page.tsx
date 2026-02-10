@@ -808,7 +808,7 @@ export default function Manage() {
 
         {/* Rent Tracker Modal */}
         {rentTrackerBoardingId && (
-          <div className="fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 flex items-center justify-center p-4">
             <div className="bg-background rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center p-6 border-b border-borderPrimary sticky top-0 bg-backgroundSecondary">
                 <h2 className="text-xl font-semibold text-textPrimary">

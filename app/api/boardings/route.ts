@@ -89,6 +89,9 @@ export async function GET(request: Request) {
           description: 1,
           mainImage: 1,
           totalRooms: { $ifNull: ["$totalRooms", 0] },
+          nearestUniversity: { $ifNull: ["$nearestUniversity", ""] },
+          distanceFromUniversity: { $ifNull: ["$distanceFromUniversity", 0] },
+          distanceUnit: { $ifNull: ["$distanceUnit", "km"] },
           isAvailable: { $ifNull: ["$isAvailable", true] },
           rooms: {
             $map: {

@@ -2,9 +2,10 @@
 
 import BillingTab from "@/app/_components/manage/BillingTab";
 import GeneralInfoTab from "@/app/_components/manage/GeneralInfoTab";
+import RentTracker from "@/app/_components/manage/RentTracker";
 import RoomsTab from "@/app/_components/manage/RoomsTab";
 import axiosInstance, { API_PATHS } from "@/lib/axios";
-import { Box, CreditCard, Home } from "lucide-react";
+import { Box, CreditCard, Home, Wallet } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import useSWR, { mutate } from "swr";
 import { toast } from "sonner";
@@ -55,7 +56,7 @@ export default function Manage() {
   const idCounterRef = React.useRef(1);
   const getNextId = () => String(idCounterRef.current++);
 
-  const [activeTab, setActiveTab] = useState<"general" | "rooms" | "billing">(
+  const [activeTab, setActiveTab] = useState<"general" | "rooms" | "billing" | "rent-tracker">(
     "general",
   );
 
@@ -214,6 +215,8 @@ export default function Manage() {
         setBoardings(updatedBoardings);
         setSelectedBoardingId(createdBoarding.id);
         toast.success("Saved successfully");
+        // Refresh boardings from API to ensure all fields persist on reload
+        await refreshBoardings();
       } else {
         // Update existing boarding
         await axiosInstance.put(
@@ -229,24 +232,9 @@ export default function Manage() {
           },
         );
 
-        // Update the boarding in the local state
-        setBoardings(
-          boardings.map((b) =>
-            b.id === selectedBoarding.id
-              ? {
-                ...b,
-                name: selectedBoarding.name,
-                description: selectedBoarding.description,
-                mainImage: selectedBoarding.mainImage,
-                totalRooms: selectedBoarding.totalRooms,
-                nearestUniversity: selectedBoarding.nearestUniversity,
-                distanceFromUniversity: selectedBoarding.distanceFromUniversity,
-                distanceUnit: selectedBoarding.distanceUnit,
-              }
-              : b,
-          ),
-        );
         toast.success("Saved successfully");
+        // Refresh boardings from API to ensure all fields persist on reload
+        await refreshBoardings();
       }
     } catch (error: any) {
       console.error("Error saving boarding:", error);
@@ -762,6 +750,16 @@ export default function Manage() {
             savingRoomId={savingRoomId}
           />
         );
+      case "rent-tracker":
+        return (
+          <RentTracker
+            boardings={boardings}
+            selectedBoardingId={selectedBoardingId}
+            rooms={selectedBoarding?.rooms || []}
+            selectedMonth={selectedMonth}
+            setSelectedMonth={setSelectedMonth}
+          />
+        );
       default:
         return null;
     }
@@ -784,6 +782,7 @@ export default function Manage() {
             { id: "general", label: "General Info", icon: <Home size={18} /> },
             { id: "rooms", label: "Rooms", icon: <Box size={18} /> },
             { id: "billing", label: "Billing", icon: <CreditCard size={18} /> },
+            { id: "rent-tracker", label: "Rent Tracker", icon: <Wallet size={18} /> },
           ].map((tab) => (
             <button
               key={tab.id}

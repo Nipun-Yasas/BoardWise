@@ -2,9 +2,10 @@ import { getSession } from "@/lib/auth";
 import connectDB from "@/lib/db";
 import Boarding from "@/models/Boarding";
 import MonthlyBill from "@/models/MonthlyBill";
+import RentPayment from "@/models/RentPayment";
 import Room from "@/models/Room";
-import { NextResponse } from "next/server";
 import mongoose from "mongoose";
+import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
@@ -49,74 +50,109 @@ export async function GET() {
 
     // 4. Parallel Aggregations for Financials
     // We need:
-    // - Total Revenue (Current Month)
+    // - Total Revenue (Current Month) - from both MonthlyBill AND RentPayment
     // - Total Revenue (Previous Month) -> for Trend
     // - Operational Bills (Current Month)
     // - Operational Bills (Previous Month) -> for Trend
     // - Yearly Revenue Chart Data
 
-    const [financialStats, chartDataRaw] = await Promise.all([
-      // Aggregation 1: Current & Previous Month Stats
-      MonthlyBill.aggregate([
-        {
-          $match: {
-            roomId: { $in: roomIds },
-            month: { $in: [currentMonthStr, prevMonthStr] },
-          },
-        },
-        {
-          $lookup: {
-            from: "billamounts",
-            localField: "_id",
-            foreignField: "monthlyBillId",
-            as: "amounts",
-          },
-        },
-        {
-          $unwind: {
-            path: "$amounts",
-            preserveNullAndEmptyArrays: true,
-          },
-        },
-        {
-          $group: {
-            _id: {
-              month: "$month",
-              isPaid: "$isPaid",
+    const [financialStats, rentPaymentStats, chartDataRaw, chartDataRent] =
+      await Promise.all([
+        // Aggregation 1: Current & Previous Month Stats (MonthlyBill)
+        MonthlyBill.aggregate([
+          {
+            $match: {
+              roomId: { $in: roomIds },
+              month: { $in: [currentMonthStr, prevMonthStr] },
             },
-            totalAmount: { $sum: "$amounts.amount" },
           },
-        },
-      ]),
+          {
+            $lookup: {
+              from: "billamounts",
+              localField: "_id",
+              foreignField: "monthlyBillId",
+              as: "amounts",
+            },
+          },
+          {
+            $unwind: {
+              path: "$amounts",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $group: {
+              _id: {
+                month: "$month",
+                isPaid: "$isPaid",
+              },
+              totalAmount: { $sum: "$amounts.amount" },
+            },
+          },
+        ]),
 
-      // Aggregation 2: Yearly Revenue Chart
-      MonthlyBill.aggregate([
-        {
-          $match: {
-            roomId: { $in: roomIds },
-            isPaid: true, // Revenue only counts paid bills
-            month: { $regex: `^${currentYear}-` }, // Starts with YYYY-
+        // Aggregation 2: RentPayment Stats (Current & Previous Month)
+        RentPayment.aggregate([
+          {
+            $match: {
+              roomId: { $in: roomIds },
+              month: { $in: [currentMonthStr, prevMonthStr] },
+              isPaid: true,
+            },
           },
-        },
-        {
-          $lookup: {
-            from: "billamounts",
-            localField: "_id",
-            foreignField: "monthlyBillId",
-            as: "amounts",
+          {
+            $group: {
+              _id: "$month",
+              totalRentRevenue: { $sum: "$rentAmount" },
+            },
           },
-        },
-        {
-          $unwind: "$amounts",
-        },
-        {
-          $group: {
-            _id: "$month", // Group by YYYY-MM
-            totalRevenue: { $sum: "$amounts.amount" },
+        ]),
+
+        // Aggregation 3: Yearly Revenue Chart (MonthlyBill)
+        MonthlyBill.aggregate([
+          {
+            $match: {
+              roomId: { $in: roomIds },
+              isPaid: true, // Revenue only counts paid bills
+              month: { $regex: `^${currentYear}-` }, // Starts with YYYY-
+            },
           },
-        },
-      ]),
-    ]);
+          {
+            $lookup: {
+              from: "billamounts",
+              localField: "_id",
+              foreignField: "monthlyBillId",
+              as: "amounts",
+            },
+          },
+          {
+            $unwind: "$amounts",
+          },
+          {
+            $group: {
+              _id: "$month", // Group by YYYY-MM
+              totalRevenue: { $sum: "$amounts.amount" },
+            },
+          },
+        ]),
+
+        // Aggregation 4: Yearly Rent Revenue Chart (RentPayment)
+        RentPayment.aggregate([
+          {
+            $match: {
+              roomId: { $in: roomIds },
+              isPaid: true,
+              month: { $regex: `^${currentYear}-` }, // Starts with YYYY-
+            },
+          },
+          {
+            $group: {
+              _id: "$month",
+              totalRentRevenue: { $sum: "$rentAmount" },
+            },
+          },
+        ]),
+      ]);
 
     // Process Financial Stats
     let currentRev = 0;
@@ -138,6 +174,15 @@ export async function GET() {
       }
     });
 
+    // Add RentPayment Revenue (current and previous month)
+    rentPaymentStats.forEach((stat) => {
+      if (stat._id === currentMonthStr) {
+        currentRev += stat.totalRentRevenue || 0;
+      } else if (stat._id === prevMonthStr) {
+        prevRev += stat.totalRentRevenue || 0;
+      }
+    });
+
     // Calculate Trends
     const calculateTrend = (current: number, previous: number) => {
       if (previous === 0) return current > 0 ? 100 : 0;
@@ -147,7 +192,7 @@ export async function GET() {
     const revenueTrend = calculateTrend(currentRev, prevRev);
     const operationalBillsTrend = calculateTrend(currentOps, prevOps);
 
-    // Process Chart Data
+    // Process Chart Data (combine MonthlyBill + RentPayment revenue)
     const months = [
       "Jan",
       "Feb",
@@ -164,10 +209,13 @@ export async function GET() {
     ];
     const chartData = months.map((name, index) => {
       const monthStr = `${currentYear}-${String(index + 1).padStart(2, "0")}`;
-      const found = chartDataRaw.find((d) => d._id === monthStr);
+      const billRevenue =
+        chartDataRaw.find((d) => d._id === monthStr)?.totalRevenue || 0;
+      const rentRevenue =
+        chartDataRent.find((d) => d._id === monthStr)?.totalRentRevenue || 0;
       return {
         name,
-        total: found ? found.totalRevenue : 0,
+        total: billRevenue + rentRevenue,
       };
     });
 

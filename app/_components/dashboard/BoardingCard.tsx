@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, Users, Wallet } from "lucide-react";
+import { MapPin, Users, Wallet, Eye } from "lucide-react";
 
 export const Card = React.memo(
   ({
@@ -29,8 +29,8 @@ export const Card = React.memo(
       className={cn(
         "rounded-3xl relative overflow-hidden w-full transition-all duration-300 ease-out bg-backgroundSecondary border-none hover:shadow-lg",
         hovered !== null &&
-          hovered !== index &&
-          "blur-[1px] scale-[0.98] opacity-80"
+        hovered !== index &&
+        "blur-[1px] scale-[0.98] opacity-80"
       )}
     >
       <Link href={`/boarding/${card.id}`} className="block h-full w-full">
@@ -43,6 +43,18 @@ export const Card = React.memo(
           <div className="absolute top-3 right-3 bg-black/50 backdrop-blur-md text-white text-xs font-medium px-2 py-1 rounded-full flex items-center gap-1">
             <MapPin className="w-3 h-3" />
             {card.distance} km
+          </div>
+          <div className="absolute top-3 left-3 flex gap-2">
+            <div className={`px-2 py-1 rounded-full text-xs font-medium backdrop-blur-md ${card.gender === 'Mixed' ? 'bg-purple-500/80 text-white' :
+                card.gender === 'Female' ? 'bg-pink-500/80 text-white' :
+                  'bg-blue-500/80 text-white'
+              }`}>
+              {card.gender}
+            </div>
+            {/* Eye icon moved or kept? keeping alongside */}
+            <div className="bg-white/20 backdrop-blur-md p-1 rounded-full hover:bg-white/40 transition-colors duration-200">
+              <Eye className="w-4 h-4 text-white" />
+            </div>
           </div>
         </div>
 
@@ -83,6 +95,7 @@ export type Boarding = {
   rental: number;
   persons: number;
   imageUrl: string;
+  gender: string;
 };
 
 export default function BoardingCard({ boardings }: { boardings: Boarding[] }) {

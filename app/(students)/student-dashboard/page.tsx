@@ -1,80 +1,38 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
-import BoardingCard from "@/app/_components/dashboard/BoardingCard";
+import useSWR from "swr";
+import BoardingCard, { Boarding } from "@/app/_components/dashboard/BoardingCard";
 import BoardingFilters from "@/app/_components/dashboard/BoardingFilters";
 import { Button } from "@/app/_components/Button";
-import { Home, Search } from "lucide-react";
+import axiosInstance, { API_PATHS } from "@/lib/axios";
+import { Home, Search, Sparkles } from "lucide-react";
+import SmartRecommendation from "@/app/_components/student/SmartRecommendation";
 
-// Dummy Data
-const DUMMY_BOARDINGS = [
-  {
-    id: "1",
-    title: "Sunny Side Boarding",
-    university: "UOM",
-    distance: 1.2,
-    rental: 15000,
-    persons: 2,
-    imageUrl:
-      "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    id: "2",
-    title: "Green View Annex",
-    university: "UOC",
-    distance: 3.5,
-    rental: 12000,
-    persons: 1,
-    imageUrl:
-      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    id: "3",
-    title: "City Center Hub",
-    university: "USJ",
-    distance: 5.0,
-    rental: 18000,
-    persons: 4,
-    imageUrl:
-      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    id: "4",
-    title: "Lake Breeze Rooms",
-    university: "Kelaniya",
-    distance: 0.8,
-    rental: 10000,
-    persons: 2,
-    imageUrl:
-      "https://images.unsplash.com/photo-1512918760532-3edbed13588e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    id: "5",
-    title: "Modern Student Living",
-    university: "SLIIT",
-    distance: 2.0,
-    rental: 22000,
-    persons: 1,
-    imageUrl:
-      "https://images.unsplash.com/photo-1493809842364-78817add7ffb?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    id: "6",
-    title: "Cozy Corner",
-    university: "UOM",
-    distance: 1.5,
-    rental: 14000,
-    persons: 2,
-    imageUrl:
-      "https://images.unsplash.com/photo-1596276122653-65ddf3c5e2d6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-  },
-];
+
 
 // Mock User Status
 const USER_HAS_BOARDING = true; // Toggle this to test
 
+const PRESET_UNIVERSITIES = [
+  "University of Moratuwa",
+  "University of Ruhuna",
+  "University of Peradeniya",
+  "NSBM",
+  "SLIIT",
+];
+
+// fetcher for SWR
+const fetcher = (url: string) => axiosInstance.get(url).then((res) => res.data);
+
 export default function StudentDashboard() {
+  const { data: boardings = [], error, isLoading } = useSWR<Boarding[]>(
+    API_PATHS.DASHBOARD.STUDENT,
+    fetcher
+  );
+
+  const [showSmartRecommendation, setShowSmartRecommendation] = useState(false);
   const [filters, setFilters] = useState({
     search: "",
     university: "",
@@ -83,12 +41,22 @@ export default function StudentDashboard() {
     persons: "",
   });
 
+  // Removed manual useEffect fetching
+
   const handleFilterChange = (key: string, value: string | number) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
+  const universities = useMemo(() => {
+    const unis = new Set([
+      ...PRESET_UNIVERSITIES,
+      ...boardings.map((b) => b.university).filter(Boolean),
+    ]);
+    return Array.from(unis).sort();
+  }, [boardings]);
+
   const filteredBoardings = useMemo(() => {
-    return DUMMY_BOARDINGS.filter((boarding) => {
+    return boardings.filter((boarding) => {
       const matchesSearch =
         boarding.title.toLowerCase().includes(filters.search.toLowerCase()) ||
         boarding.university
@@ -105,14 +73,11 @@ export default function StudentDashboard() {
       const matchesRental =
         filters.maxRental > 0 ? boarding.rental <= filters.maxRental : true;
 
-      // Since distance isn't a direct filter in UI yet but good to have logic ready
-      // const matchesDistance = filters.maxDistance > 0 ? boarding.distance <= filters.maxDistance : true;
-
       return (
         matchesSearch && matchesUniversity && matchesPersons && matchesRental
       );
     });
-  }, [filters]);
+  }, [filters, boardings]);
 
   return (
     <div className="container mx-auto p-6 max-w-7xl">
@@ -125,6 +90,18 @@ export default function StudentDashboard() {
             Discover comfort and convenience near your university
           </p>
         </div>
+
+        {/* AI Smart Recommendation Button */}
+        <button
+          onClick={() => setShowSmartRecommendation(true)}
+          className="group relative px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2"
+        >
+          <Sparkles className="w-5 h-5 group-hover:animate-pulse" />
+          <span>AI Finder</span>
+          <div className="absolute -top-1 -right-1 px-2 py-0.5 bg-yellow-400 text-yellow-900 text-xs font-bold rounded-full animate-bounce">
+            NEW
+          </div>
+        </button>
       </div>
 
       {/* User Boarding Status Banner */}
@@ -156,10 +133,18 @@ export default function StudentDashboard() {
       )}
 
       {/* Filters */}
-      <BoardingFilters filters={filters} onFilterChange={handleFilterChange} />
+      <BoardingFilters
+        filters={filters}
+        onFilterChange={handleFilterChange}
+        universities={universities}
+      />
 
       {/* Results Grid */}
-      {filteredBoardings.length > 0 ? (
+      {isLoading ? (
+        <div className="flex justify-center py-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      ) : filteredBoardings.length > 0 ? (
         <BoardingCard boardings={filteredBoardings} />
       ) : (
         <div className="text-center py-20">
@@ -173,6 +158,13 @@ export default function StudentDashboard() {
             Try adjusting your filters to find what you&apos;re looking for.
           </p>
         </div>
+      )}
+      
+      {/* Smart Recommendation Modal */}
+      {showSmartRecommendation && (
+        <SmartRecommendation
+          onClose={() => setShowSmartRecommendation(false)}
+        />
       )}
     </div>
   );

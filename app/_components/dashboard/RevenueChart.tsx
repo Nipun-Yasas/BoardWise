@@ -9,58 +9,14 @@ import {
     YAxis,
 } from "recharts";
 
-const data = [
-    {
-        name: "Jan",
-        total: Math.floor(Math.random() * 500000) + 100000,
-    },
-    {
-        name: "Feb",
-        total: Math.floor(Math.random() * 500000) + 100000,
-    },
-    {
-        name: "Mar",
-        total: Math.floor(Math.random() * 500000) + 100000,
-    },
-    {
-        name: "Apr",
-        total: Math.floor(Math.random() * 500000) + 100000,
-    },
-    {
-        name: "May",
-        total: Math.floor(Math.random() * 500000) + 100000,
-    },
-    {
-        name: "Jun",
-        total: Math.floor(Math.random() * 500000) + 100000,
-    },
-    {
-        name: "Jul",
-        total: Math.floor(Math.random() * 500000) + 100000,
-    },
-    {
-        name: "Aug",
-        total: Math.floor(Math.random() * 500000) + 100000,
-    },
-    {
-        name: "Sep",
-        total: Math.floor(Math.random() * 500000) + 100000,
-    },
-    {
-        name: "Oct",
-        total: Math.floor(Math.random() * 500000) + 100000,
-    },
-    {
-        name: "Nov",
-        total: Math.floor(Math.random() * 500000) + 100000,
-    },
-    {
-        name: "Dec",
-        total: Math.floor(Math.random() * 500000) + 100000,
-    },
-];
+interface RevenueChartProps {
+    data: {
+        name: string;
+        total: number;
+    }[];
+}
 
-export function RevenueChart() {
+export function RevenueChart({ data }: RevenueChartProps) {
     return (
         <div className="rounded-xl border border-borderPrimary bg-backgroundSecondary text-textPrimary shadow col-span-4">
             <div className="p-6 flex flex-col gap-y-1.5 space-y-0">

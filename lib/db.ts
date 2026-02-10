@@ -4,7 +4,7 @@ const MONGODB_URI = process.env.DATABASE_URL;
 
 if (!MONGODB_URI) {
   throw new Error(
-    "Please define the DATABASE_URL environment variable inside .env"
+    "Please define the DATABASE_URL environment variable inside .env",
   );
 }
 
@@ -31,6 +31,8 @@ async function connectDB() {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
     };
 
     cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {

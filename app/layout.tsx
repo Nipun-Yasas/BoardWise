@@ -1,9 +1,10 @@
+import { AuthProvider } from "@/context/AuthContext";
 import type { Metadata } from "next";
 import { Inter, Poppins, Roboto_Mono } from "next/font/google";
-import "./globals.css";
-import ThemeProvider from "./_components/ThemeProvider";
-import { AuthProvider } from "@/context/AuthContext";
 import { Suspense } from "react";
+import { Toaster } from "sonner";
+import ThemeProvider from "./_components/ThemeProvider";
+import "./globals.css";
 
 const inter = Inter({
   weight: ["300", "400", "500", "600"],
@@ -40,18 +41,17 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${inter.variable} ${poppins.variable} ${robotoMono.variable}`}
     >
-      <body className="antialiased" >
+      <body className="antialiased">
         <Suspense fallback={<p>Loading...</p>}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <AuthProvider>
-            {children}
-          </AuthProvider>
-        </ThemeProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <AuthProvider>{children}</AuthProvider>
+            <Toaster position="top-right" richColors />
+          </ThemeProvider>
         </Suspense>
       </body>
     </html>

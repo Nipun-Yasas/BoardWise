@@ -23,10 +23,26 @@ const UserSchema = new Schema(
       type: String,
       required: [true, "Role is required"],
     },
+    university: {
+      type: String,
+      default: "",
+    },
+    faculty: {
+      type: String,
+      default: "",
+    },
+    academicYear: {
+      type: String,
+      default: "",
+    },
+    image: {
+      type: String,
+      default: null,
+    },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 const User = models.User || model("User", UserSchema);

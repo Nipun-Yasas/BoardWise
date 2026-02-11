@@ -30,7 +30,7 @@ export default function AuthContainer() {
       </Link>
       {/* Form Container - Scrolls with page */}
       <div
-        className={`w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-16 bg-white dark:bg-neutral-950 transition-transform duration-700 ease-in-out z-10 ${isSignup ? 'lg:translate-x-full' : 'lg:translate-x-0'
+        className={`w-full lg:w-1/2 flex-1 flex items-center justify-center p-8 lg:p-16 bg-white dark:bg-neutral-950 transition-transform duration-700 ease-in-out z-10 ${isSignup ? 'lg:translate-x-full' : 'lg:translate-x-0'
           }`}
       >
         <div className="w-full max-w-md my-auto">

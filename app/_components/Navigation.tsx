@@ -13,6 +13,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "./Button";
 import { ThemeToggle } from "./ThemeToggle";
+import { useAuth } from "@/context/AuthContext";
 
 const navItems = [
   { name: "Home", href: "/" },
@@ -28,6 +29,7 @@ export const Navigation = () => {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     setMounted(true);
@@ -51,6 +53,15 @@ export const Navigation = () => {
     }
   });
 
+  const getLinkHref = (item: { name: string; href: string }) => {
+    if (item.name === "Dashboard") {
+      if (!user) return "/auth";
+      if (user.role === "Student") return "/student-dashboard";
+      if (user.role === "Owner") return "/owner-dashboard";
+    }
+    return item.href;
+  };
+
   return (
     <>
       <motion.div
@@ -73,11 +84,11 @@ export const Navigation = () => {
             isMobile
               ? { backgroundColor: "rgba(0, 0, 0, 0)", width: "95%" }
               : {
-                  width: isScrolled ? "fit-content" : "1000px",
-                  backgroundColor: isScrolled
-                    ? "var(--background-secondary)"
-                    : "rgba(0, 0, 0, 0)",
-                }
+                width: isScrolled ? "fit-content" : "1000px",
+                backgroundColor: isScrolled
+                  ? "var(--background-secondary)"
+                  : "rgba(0, 0, 0, 0)",
+              }
           }
           transition={{
             duration: 0.5,
@@ -93,7 +104,8 @@ export const Navigation = () => {
           </Link>
           <ul className="hidden font-light gap-6 text-sm sm:flex whitespace-nowrap px-16">
             {navItems.map((item) => {
-              const isActive = pathname === item.href;
+              const href = getLinkHref(item);
+              const isActive = pathname === href;
               return (
                 <li
                   key={item.name}
@@ -106,11 +118,10 @@ export const Navigation = () => {
                       transition={{ duration: 0.3 }}
                     />
                   )}
-                  <a
-                    className={`text-textPrimary ${
-                      isActive ? "font-semibold" : ""
-                    }`}
-                    href={item.href}
+                  <Link
+                    className={`text-textPrimary ${isActive ? "font-semibold" : ""
+                      }`}
+                    href={href}
                   >
                     <span className="relative inline-flex overflow-hidden">
                       <div className="translate-y-0 skew-y-0 transform-gpu transition-transform duration-500 group-hover:-translate-y-[150%] group-hover:skew-y-12">
@@ -120,7 +131,7 @@ export const Navigation = () => {
                         {item.name}
                       </div>
                     </span>
-                  </a>
+                  </Link>
                 </li>
               );
             })}
@@ -150,14 +161,14 @@ export const Navigation = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setMobileMenuOpen(false)}
-              className="fixed inset-0 z-[60] bg-backgroundSecondary backdrop-blur-sm sm:hidden"
+              className="fixed inset-0 z-[1001] bg-black/50 backdrop-blur-sm sm:hidden"
             />
             <motion.aside
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed right-0 top-0 bottom-0 z-[70] w-64 bg-background border-l border-borderPrimary p-6 sm:hidden flex flex-col gap-6"
+              className="fixed right-0 top-0 bottom-0 z-[1002] w-64 bg-backgroundSecondary border-l border-borderPrimary p-6 sm:hidden flex flex-col gap-6"
             >
               <div className="flex items-center justify-between">
                 <span className="font-clash-display text-xl font-medium text-textPrimary">
@@ -172,26 +183,28 @@ export const Navigation = () => {
               </div>
 
               <ul className="flex flex-col gap-4">
-                {navItems.map((item) => (
-                  <li key={item.name}>
-                    <a
-                      href={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`block text-lg ${
-                        pathname === item.href
+                {navItems.map((item) => {
+                  const href = getLinkHref(item);
+                  return (
+                    <li key={item.name}>
+                      <Link
+                        href={href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={`block text-lg ${pathname === href
                           ? "text-primary font-semibold"
                           : "text-textPrimary"
-                      }`}
-                    >
-                      {item.name}
-                    </a>
-                  </li>
-                ))}
+                          }`}
+                      >
+                        {item.name}
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
 
-              <div className="mt-auto flex flex-col gap-4">
-                <Button className="w-full">Login</Button>
-                <Button className="w-full">Register</Button>
+              <div className="mt-6 flex flex-col gap-4">
+                <Button className="w-full flex justify-center" onClick={() => router.push("/auth")}>Login</Button>
+                <Button className="w-full flex justify-center" onClick={() => router.push("/auth")}>Register</Button>
               </div>
             </motion.aside>
           </>

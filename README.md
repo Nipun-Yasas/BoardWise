@@ -116,6 +116,31 @@
    npm start
    ```
 
+### Deployment to Vercel
+
+When deploying to Vercel (or any production environment), you **must** update the environment variables:
+
+1. **Go to your Vercel project settings**
+   - Navigate to: Project → Settings → Environment Variables
+
+2. **Add/Update the following environment variables**:
+   ```
+   DATABASE_URL=mongodb+srv://your-connection-string
+   JWT_SECRET=your-super-secret-jwt-key-minimum-32-characters-long
+   EMAIL_USER=your-gmail@gmail.com
+   EMAIL_PASSWORD=your-gmail-app-password
+   NEXT_PUBLIC_APP_URL=https://your-app-name.vercel.app
+   NODE_ENV=production
+   ```
+
+3. **Important**: Set `NEXT_PUBLIC_APP_URL` to your actual Vercel domain
+   - ✅ Correct: `https://board-wise-five.vercel.app`
+   - ❌ Wrong: `http://localhost:3000`
+   
+   This ensures password reset links and other email links point to your deployed site, not localhost.
+
+4. **Redeploy** after updating environment variables for changes to take effect
+
 ## 📁 Project Structure
 
 ```
@@ -249,14 +274,16 @@ npm run lint
 
 ## 📝 Environment Variables Reference
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `DATABASE_URL` | MongoDB connection string | `mongodb+srv://user:pass@cluster.mongodb.net/boardwise` |
-| `JWT_SECRET` | Secret key for JWT signing (min 32 chars) | `your-super-secret-key-here` |
-| `EMAIL_USER` | Gmail address for sending emails | `yourapp@gmail.com` |
-| `EMAIL_PASSWORD` | Gmail App Password | `abcd efgh ijkl mnop` |
-| `NEXT_PUBLIC_APP_URL` | Application base URL | `http://localhost:3000` |
-| `NODE_ENV` | Environment mode | `development` or `production` |
+| Variable | Description | Example | Production Value |
+|----------|-------------|---------|------------------|
+| `DATABASE_URL` | MongoDB connection string | `mongodb+srv://user:pass@cluster.mongodb.net/boardwise` | Same as development |
+| `JWT_SECRET` | Secret key for JWT signing (min 32 chars) | `your-super-secret-key-here` | Use strong secret in production |
+| `EMAIL_USER` | Gmail address for sending emails | `yourapp@gmail.com` | Same as development |
+| `EMAIL_PASSWORD` | Gmail App Password | `abcd efgh ijkl mnop` | Same as development |
+| `NEXT_PUBLIC_APP_URL` | Application base URL | `http://localhost:3000` | `https://your-app.vercel.app` ⚠️ **Must update for deployment!** |
+| `NODE_ENV` | Environment mode | `development` | `production` |
+
+**⚠️ Important**: When deploying to Vercel, AWS, or any hosting platform, **you must update `NEXT_PUBLIC_APP_URL`** to your actual deployment URL. Otherwise, password reset emails and other features will generate links pointing to `localhost`, which won't work on mobile devices or for remote users.
 
 ## 🤝 Contributing
 

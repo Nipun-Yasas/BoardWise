@@ -92,8 +92,10 @@ BoardWise is a comprehensive boarding management system designed to streamline t
     ```
 
     **Note for Production Deployment (Vercel):**
-    - Set `NEXT_PUBLIC_APP_URL` to your Vercel deployment URL (e.g., `https://board-wise-five.vercel.app`)
-    - This is required for password reset emails to work correctly
+    - **IMPORTANT**: Set `NEXT_PUBLIC_APP_URL` to your Vercel deployment URL (e.g., `https://board-wise-five.vercel.app`)
+    - This environment variable is **required** for password reset emails to work correctly in production
+    - Without it, password reset links may point to localhost or incorrect domains
+    - Add this variable in your Vercel project settings under Environment Variables
 
 4.  Run the development server:
 

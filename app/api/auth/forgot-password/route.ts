@@ -47,8 +47,9 @@ export async function POST(req: NextRequest) {
           // Safely extract origin from referer URL
           const refererUrl = new URL(referer);
           baseUrl = refererUrl.origin;
-        } catch {
-          // Invalid referer URL, ignore
+        } catch (error) {
+          // Invalid referer URL, ignore and log for debugging
+          console.warn('Invalid referer URL:', referer, error);
         }
       }
       

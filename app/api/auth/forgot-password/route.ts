@@ -29,8 +29,12 @@ export async function POST(req: NextRequest) {
       expiresAt: new Date(Date.now() + 3600000), // 1 hour
     });
 
-    // Create reset URL
-    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${resetToken}`;
+    // Create reset URL - use environment variable or fallback to request headers
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
+                    (req.headers.get('origin') || 
+                     req.headers.get('referer')?.split('/').slice(0, 3).join('/') ||
+                     'http://localhost:3000');
+    const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`;
 
     // Check if email credentials exist
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {

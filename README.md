@@ -63,18 +63,37 @@ BoardWise is a comprehensive boarding management system designed to streamline t
 
 3.  Set up environment variables:
     Please ask the team members for the environment variables or just access the website using the public link.
-    Create a `.env` file in the root directory and add the following:
+    Create a `.env` file in the root directory based on `.env.example`:
+
+    ```bash
+    cp .env.example .env
+    ```
+
+    Required environment variables:
 
     ```env
     # Database
-    DATABASE_URL=""
+    DATABASE_URL="mongodb://localhost:27017/boardwise"
 
     # Authentication
-    JWT_SECRET=""
+    JWT_SECRET="your-secret-key-here"
 
     # AI Integration
-    GEMINI_API_KEY=""
+    GEMINI_API_KEY="your-gemini-api-key"
+
+    # Email Configuration (for password reset)
+    EMAIL_USER="your-email@gmail.com"
+    EMAIL_PASSWORD="your-app-password"
+
+    # Application URL (required for password reset emails)
+    # For local: http://localhost:3000
+    # For production: https://your-domain.vercel.app
+    NEXT_PUBLIC_APP_URL="http://localhost:3000"
     ```
+
+    **Note for Production Deployment (Vercel):**
+    - Set `NEXT_PUBLIC_APP_URL` to your Vercel deployment URL (e.g., `https://board-wise-five.vercel.app`)
+    - This is required for password reset emails to work correctly
 
 4.  Run the development server:
 

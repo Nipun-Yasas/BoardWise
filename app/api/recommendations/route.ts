@@ -7,16 +7,13 @@ import { NextResponse } from "next/server";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
-
-// ✅ FIXED: Use the working model name
-const GEMINI_MODEL =  "gemini-2.5-flash";
-//                                                                   ↑ Semicolon OUTSIDE the string
+const GEMINI_MODEL = "gemini-2.5-flash";
 const requestQueue: { timestamp: number; resolve: () => void }[] = [];
 const RATE_LIMIT_DELAY = 3000; // 3 seconds between requests
 
 async function rateLimitedAPICall<T>(
   fn: () => Promise<T>,
-  retries = 3
+  retries = 3,
 ): Promise<T> {
   for (let attempt = 0; attempt < retries; attempt++) {
     try {
@@ -29,8 +26,7 @@ async function rateLimitedAPICall<T>(
       return await fn();
     } catch (error: any) {
       if (
-        (error.message?.includes("429") ||
-          error.message?.includes("quota")) &&
+        (error.message?.includes("429") || error.message?.includes("quota")) &&
         attempt < retries - 1
       ) {
         const backoffDelay = 5000 * Math.pow(2, attempt);
@@ -44,10 +40,10 @@ async function rateLimitedAPICall<T>(
 }
 function processQueue() {
   if (requestQueue.length === 0) return;
-  
+
   const now = Date.now();
   const item = requestQueue[0];
-  
+
   if (now - item.timestamp >= RATE_LIMIT_DELAY) {
     requestQueue.shift();
     item.resolve();
@@ -136,15 +132,15 @@ Rules:
     try {
       console.log("🔄 Extracting preferences...");
       extractionResult = await rateLimitedAPICall(() =>
-        extractionModel.generateContent(extractionPrompt)
+        extractionModel.generateContent(extractionPrompt),
       );
       console.log("✅ Preferences extracted successfully");
     } catch (apiError: any) {
       console.error("❌ Gemini API Error:", apiError.message);
       return NextResponse.json(
-        { 
+        {
           error: "AI service temporarily unavailable",
-          details: apiError.message 
+          details: apiError.message,
         },
         { status: 503 },
       );
@@ -161,7 +157,10 @@ Rules:
       } else {
         preferences = JSON.parse(extractedText);
       }
-      console.log("✅ Preferences parsed:", JSON.stringify(preferences, null, 2));
+      console.log(
+        "✅ Preferences parsed:",
+        JSON.stringify(preferences, null, 2),
+      );
     } catch (error) {
       console.error("❌ JSON parsing error:", error);
       console.error("Raw response:", extractedText);
@@ -171,21 +170,54 @@ Rules:
       );
     }
 
-    // Step 2: Fetch all available boardings with complete data
+    // Step 2: Fetch and Filter Boardings
     console.log("🔄 Fetching boardings from database...");
-    const boardings = await Boarding.find({ isAvailable: true }).lean();
-    console.log(`✅ Found ${boardings.length} available boardings`);
+
+    let query: any = { isAvailable: true };
+
+    // Optimize 1: Filter by university if detected
+    if (preferences.preferredUniversity) {
+      try {
+        // Simple regex to match university name
+        query.nearestUniversity = {
+          $regex: new RegExp(
+            preferences.preferredUniversity.split(" ").join(".*"),
+            "i",
+          ),
+        };
+        console.log(
+          `🔎 Filtering by university match: ${preferences.preferredUniversity}`,
+        );
+      } catch (e) {
+        console.warn("Regex failed, falling back to all boardings");
+      }
+    }
+
+    // Optimize 2: Limit number of candidates to process
+    // Fetch slightly more than needed to allow for some post-filtering if necessary
+    const boardings = await Boarding.find(query).limit(15).lean();
+    console.log(`✅ Found ${boardings.length} candidates`);
+
+    // If no boardings found with filter, fallback to all (limited)
+    let finalBoardings = boardings;
+    if (boardings.length === 0 && preferences.preferredUniversity) {
+      console.log(
+        "⚠️ No matches for university, falling back to all boardings",
+      );
+      finalBoardings = await Boarding.find({ isAvailable: true })
+        .limit(10)
+        .lean();
+    }
 
     const enrichedBoardings = await Promise.all(
-      boardings.map(async (boarding) => {
+      finalBoardings.map(async (boarding) => {
         const rooms = await Room.find({
           boardingId: boarding._id,
           isAvailable: true,
-        })
-          .populate("tenants", "name")
-          .lean();
+        }).lean();
 
-        const roomsWithDetails = await Promise.all(
+        // Calculate simplified room details
+        const roomsSummary = await Promise.all(
           rooms.map(async (room) => {
             const bills = await BillType.find({ roomId: room._id }).lean();
             const totalBills = bills.reduce(
@@ -195,40 +227,42 @@ Rules:
 
             return {
               id: room._id.toString(),
-              name: room.name,
+              type: room.name, // Renamed from name to type for clarity/brevity
               capacity: room.capacity,
               price: room.price,
-              description: room.description,
-              images: room.images || [],
-              isAvailable: room.isAvailable,
-              currentOccupancy: room.tenants?.length || 0,
-              availableSpots: room.capacity - (room.tenants?.length || 0),
-              billTypes: bills.map((b) => ({
-                name: b.name,
-                amount: b.amount || 0,
-              })),
-              totalMonthlyCost: room.price + totalBills,
+              spots: room.capacity - (room.tenants?.length || 0), // Renamed availableSpots
+              total: room.price + totalBills, // Renamed totalMonthlyCost
+              // Exclude description, images, tenants, detailed bills
             };
           }),
         );
 
+        // Filter out full rooms
+        const availableRooms = roomsSummary.filter((r) => r.spots > 0);
+
+        if (availableRooms.length === 0) return null;
+
+        // Optimization 3: Minify Data for Gemini
+        // We only send what's strictly necessary for decision making
         return {
           id: boarding._id.toString(),
           name: boarding.name,
-          description: boarding.description,
-          mainImage: boarding.mainImage,
-          totalRooms: boarding.totalRooms,
-          nearestUniversity: boarding.nearestUniversity || "Not specified",
-          distanceFromUniversity: boarding.distanceFromUniversity || 0,
-          distanceUnit: boarding.distanceUnit || "km",
-          address: boarding.address || "",
-          city: boarding.city || "",
-          rooms: roomsWithDetails,
+          uni: boarding.nearestUniversity, // Renamed
+          dist: `${boarding.distanceFromUniversity} ${boarding.distanceUnit}`, // Combined
+          city: boarding.city,
+          // addr: boarding.address, // Exclude address, usually not needed for decision
+          rooms: availableRooms,
+          // We include a truncated description to capture amenities
+          desc: boarding.description?.substring(0, 200) || "",
         };
       }),
     );
 
-    console.log(`✅ Enriched ${enrichedBoardings.length} boardings with room details`);
+    // Remove nulls (boardings with no available rooms)
+    const validBoardings = enrichedBoardings.filter(Boolean);
+    console.log(
+      `✅ Prepared ${validBoardings.length} minified candidates for AI`,
+    );
 
     // Step 3: Use Gemini to intelligently match and rank boardings
     const recommendationModel = genAI.getGenerativeModel({
@@ -236,101 +270,68 @@ Rules:
     });
 
     const recommendationPrompt = `
-You are an expert boarding recommendation system for students in Sri Lanka.
+You are an expert boarding recommendation system.
 
-STUDENT PREFERENCES EXTRACTED:
-${JSON.stringify(preferences, null, 2)}
+STUDENT NEEDS:
+${JSON.stringify(
+  {
+    budget: preferences.budget,
+    uni: preferences.preferredUniversity,
+    dist: preferences.maxDistance,
+    room: preferences.roomPreferences,
+    food: preferences.foodPreferences,
+    gender: preferences.genderPreference,
+    keywords: preferences.keywords,
+  },
+  null,
+  0,
+)}
 
-AVAILABLE BOARDINGS:
-${JSON.stringify(enrichedBoardings, null, 2)}
+CANDIDATES:
+${JSON.stringify(validBoardings, null, 0)}
 
 TASK:
-Analyze each boarding and rank the TOP 5 best matches based on:
-
-SCORING CRITERIA (Total 100 points):
-1. Budget Match (25 points):
-   - Perfect fit within budget: 25
-   - Slightly over budget (10-15%): 15-20
-   - Way over budget: 0-10
-
-2. Distance Match (20 points):
-   - Very close to university: 20
-   - Within acceptable range: 10-15
-   - Far from university: 0-5
-
-3. Amenities Match (25 points):
-   - All required amenities present: 25
-   - Most amenities present: 15-20
-   - Few amenities: 5-10
-
-4. Availability (15 points):
-   - Multiple rooms available: 15
-   - Limited availability: 8-12
-   - Almost full: 0-5
-
-5. Value for Money (15 points):
-   - Excellent facilities for price: 15
-   - Good value: 8-12
-   - Overpriced: 0-5
-
-MATCHING RULES:
-- If budget specified, prioritize boardings within budget
-- Match university preferences strictly (use nearestUniversity field)
-- Convert all distances to same unit for comparison (prefer km)
-- Gender restrictions are mandatory (if boarding specifies in description)
-- Food preferences are important but not mandatory
-- Extract amenities from descriptions intelligently
-- Consider room descriptions for hidden features
-- Calculate total monthly cost (rent + bills)
-- Prefer boardings with available spots
-- Look for keywords in descriptions that match student preferences
-
-Return ONLY valid JSON (no markdown, no extra text, no code blocks):
+Rank TOP 5 matches. Return JSON:
 {
   "extractedPreferences": {
-    "summary": "Brief summary of what student is looking for",
-    "criticalRequirements": ["requirement1", "requirement2"]
+    "summary": "One sentence summary",
+    "criticalRequirements": ["req1", "req2"]
   },
   "recommendations": [
     {
-      "boardingId": "string",
-      "boardingName": "string",
+      "boardingId": "id",
+      "boardingName": "name",
       "matchScore": number (0-100),
-      "rank": number (1-5),
       "bestRoom": {
-        "roomId": "string",
-        "roomName": "string",
+        "roomId": "id",
+        "roomName": "name",
         "price": number,
-        "totalMonthlyCost": number,
-        "availableSpots": number
+        "totalMonthlyCost": number
       },
       "matchReasoning": {
-        "budgetMatch": "Explanation",
-        "distanceMatch": "Explanation with actual distance",
-        "amenitiesMatch": "Explanation of what amenities match",
-        "valueProposition": "Explanation of value"
-      },
-      "pros": ["pro1", "pro2", "pro3"],
-      "cons": ["con1", "con2"],
-      "keyHighlights": ["highlight1", "highlight2"],
-      "recommendation": "Short persuasive summary why this is recommended"
+        "budgetMatch": "Brief explanation",
+        "distanceMatch": "Brief explanation",
+        "amenitiesMatch": "Brief explanation",
+        "valueProposition": "Brief explanation"
+      }
     }
   ],
-  "alternativeSuggestions": "If no perfect matches, suggest what to compromise on or look for"
+  "alternativeSuggestions": "Brief suggestion if no good matches"
 }
 `;
 
     let recommendationResult;
     try {
       console.log("🔄 Generating recommendations...");
-      recommendationResult = await recommendationModel.generateContent(recommendationPrompt);
+      recommendationResult =
+        await recommendationModel.generateContent(recommendationPrompt);
       console.log("✅ Recommendations generated successfully");
     } catch (apiError: any) {
       console.error("❌ Recommendation API Error:", apiError.message);
       return NextResponse.json(
-        { 
+        {
           error: "Failed to generate recommendations",
-          details: apiError.message 
+          details: apiError.message,
         },
         { status: 503 },
       );
@@ -369,7 +370,7 @@ Return ONLY valid JSON (no markdown, no extra text, no code blocks):
       {
         success: true,
         studentPreferences: preferences,
-        totalBoardingsAnalyzed: enrichedBoardings.length,
+        totalBoardingsAnalyzed: validBoardings.length,
         recommendations: recommendations.recommendations || [],
         extractedPreferences: recommendations.extractedPreferences,
         alternativeSuggestions: recommendations.alternativeSuggestions,

@@ -98,7 +98,7 @@ export default function Login({ onSwitchToSignup }: LoginProps) {
                   ? 'border-red-500'
                   : 'border-borderPrimary'
                   }`}
-                placeholder="••••••••"
+                placeholder="Enter your password"
               />
               <button
                 type="button"
@@ -137,7 +137,7 @@ export default function Login({ onSwitchToSignup }: LoginProps) {
         <button
           type="submit"
           disabled={formik.isSubmitting}
-          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl text-sm font-semibold text-textPrimary bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl text-sm font-semibold text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {formik.isSubmitting ? 'Signing in...' : 'Sign in'}
         </button>

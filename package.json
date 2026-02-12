@@ -1,5 +1,6 @@
 {
-  "name": "boardwise",
+  "name": "certichain",
+  "description": "A blockchain-based certificate verification system designed to eliminate fraud and ensure transparency in digital credentials.",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -21,6 +22,7 @@
     "dotenv": "^17.2.3",
     "formik": "^2.4.9",
     "jose": "^6.1.3",
+    "ldrs": "^1.1.9",
     "lucide-react": "^0.561.0",
     "mongoose": "^9.0.2",
     "motion": "^12.23.26",

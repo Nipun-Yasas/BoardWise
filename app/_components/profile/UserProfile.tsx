@@ -25,6 +25,9 @@ import { Button } from "@/app/_components/Button";
 import axiosInstance, { API_PATHS } from "@/lib/axios";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
+import { useTheme } from "next-themes";
+import { Hourglass } from 'ldrs/react'
+import 'ldrs/react/Hourglass.css'
 
 const ProfileSchema = Yup.object().shape({
     name: Yup.string().required("Name is required"),
@@ -40,6 +43,7 @@ const fetcher = (url: string) => axiosInstance.get(url).then((res) => res.data);
 
 export default function UserProfile() {
     const { user } = useAuth();
+    const { resolvedTheme } = useTheme();
     const [isEditing, setIsEditing] = useState(false);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -142,7 +146,12 @@ export default function UserProfile() {
     };
 
     if (isLoading) {
-        return <div className="p-10 text-center">Loading profile...</div>;
+        return <div className="flex justify-center items-center h-full"><Hourglass
+            size="40"
+            bgOpacity="0.1"
+            speed="1.75"
+            color={resolvedTheme === "dark" ? "white" : "black"}
+        /></div>
     }
 
     return (
@@ -165,7 +174,7 @@ export default function UserProfile() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="col-span-1">
-                    <div className="bg-backgroundSecondary rounded-3xl p-8 border border-borderPrimary flex flex-col items-center text-center h-full">
+                    <div className="bg-backgroundSecondary rounded-3xl p-8 border border-borderPrimary flex flex-col items-center text-center ">
                         <div className="relative group">
                             <div className="w-40 h-40 rounded-full overflow-hidden relative flex items-center justify-center bg-hoverPrimary">
                                 {previewImage ? (
@@ -213,7 +222,6 @@ export default function UserProfile() {
                                 <Button
                                     onClick={toggleEdit}
                                     frontIcon={<X size={18} />}
-                                    className="w-full bg-red-100 text-red-600 hover:bg-red-200 border-none"
                                 >
                                     Cancel Editing
                                 </Button>

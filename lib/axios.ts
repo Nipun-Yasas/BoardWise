@@ -21,6 +21,7 @@ export const API_PATHS = {
   DASHBOARD: {
     OWNER: "/owner-dashboard",
     STUDENT: "/boardings/public",
+    BOARDING_STATUS: "/student/boarding-status",
   },
   BOARDING: {
     GET_ALL: "/boardings",

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import React, { useState } from "react";
+import { toast } from "sonner";
 
 interface Recommendation {
   boardingId: string;
@@ -33,9 +34,9 @@ interface Recommendation {
     amenitiesMatch: string;
     valueProposition: string;
   };
-  pros: string[];
-  cons: string[];
-  keyHighlights: string[];
+  pros?: string[];
+  cons?: string[];
+  keyHighlights?: string[];
   recommendation: string;
 }
 
@@ -86,13 +87,13 @@ const SmartRecommendation: React.FC<SmartRecommendationProps> = ({
         setExtractedPreferences(data.extractedPreferences);
         setAlternativeSuggestions(data.alternativeSuggestions || "");
       } else {
-        alert(
+        toast.error(
           "Failed to get recommendations: " + (data.error || "Unknown error"),
         );
       }
     } catch (error) {
       console.error("Error:", error);
-      alert("Something went wrong. Please try again.");
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -121,14 +122,14 @@ const SmartRecommendation: React.FC<SmartRecommendationProps> = ({
           {/* Header with close button */}
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-3">
-              <div className="p-3 bg-gradient-to-br from-purple-600 to-blue-600 rounded-2xl shadow-lg">
+              <div className="p-3 bg-primary rounded-2xl shadow-lg">
                 <Sparkles className="w-8 h-8 text-white" />
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-white">
                   AI-Powered Boarding Finder
                 </h1>
-                <p className="text-gray-300">
+                <p className="text-textSecondary">
                   Find your perfect boarding in seconds
                 </p>
               </div>
@@ -144,9 +145,9 @@ const SmartRecommendation: React.FC<SmartRecommendationProps> = ({
           {/* Main Content Card */}
           <div className="bg-backgroundSecondary rounded-2xl shadow-2xl border border-borderPrimary overflow-hidden">
             {/* Input Section */}
-            <div className="p-6 md:p-8 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20">
+            <div className="p-6 md:p-8">
               <div className="flex items-start gap-3 mb-4">
-                <Lightbulb className="w-6 h-6 text-purple-600 mt-1 flex-shrink-0" />
+                <Lightbulb className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
                 <div>
                   <h2 className="text-xl font-semibold text-textPrimary mb-2">
                     Describe Your Ideal Boarding
@@ -162,7 +163,7 @@ const SmartRecommendation: React.FC<SmartRecommendationProps> = ({
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 placeholder="Example: I'm looking for a fully furnished AC room near University of Colombo, budget under 25000 rupees. I need WiFi, attached bathroom, and prefer vegetarian meals..."
-                className="w-full p-4 border-2 border-purple-200 dark:border-purple-800 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none min-h-[140px] resize-none bg-white dark:bg-gray-900 text-textPrimary placeholder:text-textSecondary/50 transition-all"
+                className="w-full p-4 border-2 border-borderPrimary rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none min-h-[140px] resize-none bg-input text-textPrimary placeholder:text-textSecondary/50 transition-all"
                 disabled={loading}
               />
 
@@ -170,7 +171,7 @@ const SmartRecommendation: React.FC<SmartRecommendationProps> = ({
                 <Button
                   onClick={getRecommendations}
                   disabled={loading || !prompt.trim()}
-                  className="flex-1 sm:flex-none bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500"
+                  className="flex-1 sm:flex-none"
                   frontIcon={
                     loading ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
@@ -193,7 +194,7 @@ const SmartRecommendation: React.FC<SmartRecommendationProps> = ({
                     <button
                       key={idx}
                       onClick={() => useExamplePrompt(example)}
-                      className="text-left p-3 bg-white dark:bg-gray-800 hover:bg-purple-50 dark:hover:bg-purple-950/30 border border-borderPrimary hover:border-purple-300 dark:hover:border-purple-700 rounded-lg text-xs text-textSecondary hover:text-purple-700 dark:hover:text-purple-300 transition-all"
+                      className="text-left p-3 bg-backgroundSecondary hover:bg-hoverPrimary border border-borderPrimary hover:border-hoverPrimary rounded-lg text-xs text-textSecondary transition-all"
                       disabled={loading}
                     >
                       {example}
@@ -208,12 +209,12 @@ const SmartRecommendation: React.FC<SmartRecommendationProps> = ({
               <div className="p-6 md:p-8 space-y-6">
                 {/* Extracted Preferences */}
                 {extractedPreferences && (
-                  <div className="bg-blue-50 dark:bg-blue-950/30 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
-                    <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-3 flex items-center gap-2">
+                  <div className="bg-backgroundSecondary rounded-xl p-6 border border-borderPrimary">
+                    <h3 className="text-lg font-semibold text-textPrimary mb-3 flex items-center gap-2">
                       <TrendingUp className="w-5 h-5" />
                       What We Understood:
                     </h3>
-                    <p className="text-blue-800 dark:text-blue-200 mb-4">
+                    <p className="text-textSecondary mb-4">
                       {extractedPreferences.summary}
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -221,7 +222,7 @@ const SmartRecommendation: React.FC<SmartRecommendationProps> = ({
                         (req, idx) => (
                           <span
                             key={idx}
-                            className="px-3 py-1.5 bg-blue-200 dark:bg-blue-900 text-blue-900 dark:text-blue-100 rounded-full text-sm font-medium"
+                            className="px-3 py-1.5 bg-primary text-white rounded-full text-sm font-medium"
                           >
                             {req}
                           </span>
@@ -235,14 +236,14 @@ const SmartRecommendation: React.FC<SmartRecommendationProps> = ({
                 {recommendations.length > 0 ? (
                   <div className="space-y-6">
                     <h3 className="text-2xl font-bold text-textPrimary flex items-center gap-2">
-                      <Sparkles className="w-6 h-6 text-purple-600" />
+                      <Sparkles className="w-6 h-6 text-primary" />
                       Top {recommendations.length} Recommendations
                     </h3>
 
                     {recommendations.map((rec) => (
                       <div
                         key={rec.boardingId}
-                        className="bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-borderPrimary overflow-hidden hover:shadow-xl transition-shadow"
+                        className="bg-backgroundSecondary rounded-xl shadow-lg border border-borderPrimary overflow-hidden hover:shadow-xl transition-shadow"
                       >
                         {/* Header with Score */}
                         <div
@@ -310,63 +311,71 @@ const SmartRecommendation: React.FC<SmartRecommendationProps> = ({
                           </div>
 
                           {/* Key Highlights */}
-                          <div>
-                            <h5 className="font-semibold text-textPrimary mb-3 flex items-center gap-2">
-                              <Sparkles className="w-5 h-5 text-purple-600" />
-                              Key Highlights
-                            </h5>
-                            <div className="flex flex-wrap gap-2">
-                              {rec.keyHighlights.map((highlight, idx) => (
-                                <span
-                                  key={idx}
-                                  className="px-3 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 rounded-full text-sm font-medium"
-                                >
-                                  {highlight}
-                                </span>
-                              ))}
+                          {rec.keyHighlights && rec.keyHighlights.length > 0 && (
+                            <div>
+                              <h5 className="font-semibold text-textPrimary mb-3 flex items-center gap-2">
+                                <Sparkles className="w-5 h-5 text-primary" />
+                                Key Highlights
+                              </h5>
+                              <div className="flex flex-wrap gap-2">
+                                {rec.keyHighlights.map((highlight, idx) => (
+                                  <span
+                                    key={idx}
+                                    className="px-3 py-1.5 bg-primary text-white rounded-full text-sm font-medium"
+                                  >
+                                    {highlight}
+                                  </span>
+                                ))}
+                              </div>
                             </div>
-                          </div>
+                          )}
 
                           {/* Pros and Cons */}
-                          <div className="grid md:grid-cols-2 gap-4">
-                            <div>
-                              <h5 className="font-semibold text-green-900 dark:text-green-100 mb-3 flex items-center gap-2">
-                                <Check className="w-5 h-5" />
-                                Pros
-                              </h5>
-                              <ul className="space-y-2">
-                                {rec.pros.map((pro, idx) => (
-                                  <li
-                                    key={idx}
-                                    className="text-sm text-textSecondary flex items-start gap-2"
-                                  >
-                                    <Check className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                                    <span>{pro}</span>
-                                  </li>
-                                ))}
-                              </ul>
+                          {(rec.pros && rec.pros.length > 0) || (rec.cons && rec.cons.length > 0) ? (
+                            <div className="grid md:grid-cols-2 gap-4">
+                              {rec.pros && rec.pros.length > 0 && (
+                                <div>
+                                  <h5 className="font-semibold text-green-900 dark:text-green-100 mb-3 flex items-center gap-2">
+                                    <Check className="w-5 h-5" />
+                                    Pros
+                                  </h5>
+                                  <ul className="space-y-2">
+                                    {rec.pros.map((pro, idx) => (
+                                      <li
+                                        key={idx}
+                                        className="text-sm text-textSecondary flex items-start gap-2"
+                                      >
+                                        <Check className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                                        <span>{pro}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              {rec.cons && rec.cons.length > 0 && (
+                                <div>
+                                  <h5 className="font-semibold text-red-900 dark:text-red-100 mb-3 flex items-center gap-2">
+                                    <X className="w-5 h-5" />
+                                    Cons
+                                  </h5>
+                                  <ul className="space-y-2">
+                                    {rec.cons.map((con, idx) => (
+                                      <li
+                                        key={idx}
+                                        className="text-sm text-textSecondary flex items-start gap-2"
+                                      >
+                                        <X className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                                        <span>{con}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
                             </div>
-                            <div>
-                              <h5 className="font-semibold text-red-900 dark:text-red-100 mb-3 flex items-center gap-2">
-                                <X className="w-5 h-5" />
-                                Cons
-                              </h5>
-                              <ul className="space-y-2">
-                                {rec.cons.map((con, idx) => (
-                                  <li
-                                    key={idx}
-                                    className="text-sm text-textSecondary flex items-start gap-2"
-                                  >
-                                    <X className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
-                                    <span>{con}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          </div>
+                          ) : null}
 
                           {/* Match Reasoning */}
-                          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 space-y-2 text-sm">
+                          <div className="bg-backgroundSecondary rounded-lg p-4 space-y-2 text-sm">
                             <h5 className="font-semibold text-textPrimary mb-3">
                               Why This Match?
                             </h5>
@@ -401,7 +410,6 @@ const SmartRecommendation: React.FC<SmartRecommendationProps> = ({
                           {/* Action Button */}
                           <Link href={`/boarding/${rec.boardingId}`}>
                             <Button
-                              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
                               backIcon={<ArrowRight className="w-5 h-5" />}
                             >
                               View Full Details

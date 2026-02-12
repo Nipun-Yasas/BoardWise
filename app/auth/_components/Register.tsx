@@ -20,6 +20,7 @@ interface RegisterProps {
 
 export default function Register({ onSwitchToLogin }: RegisterProps) {
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const { register } = useAuth();
   const formik = useFormik({
@@ -146,7 +147,7 @@ export default function Register({ onSwitchToLogin }: RegisterProps) {
                   ? "border-red-500"
                   : "border-borderPrimary"
                   }`}
-                placeholder="0*********"
+                placeholder="07*********"
               />
             </div>
             {formik.touched.mobile_number && formik.errors.mobile_number ? (
@@ -198,7 +199,7 @@ export default function Register({ onSwitchToLogin }: RegisterProps) {
                   ? "border-red-500"
                   : "border-borderPrimary"
                   }`}
-                placeholder="••••••••"
+                placeholder="Enter your password"
               />
               <button
                 type="button"
@@ -221,27 +222,38 @@ export default function Register({ onSwitchToLogin }: RegisterProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-textPrimary mb-1.5">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
               Confirm Password
             </label>
             <div className="relative group">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-textSecondary group-focus-within:text-primary transition-colors">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-primary transition-colors">
                 <Lock className="h-5 w-5" />
               </div>
               <input
-                type={showPassword ? "text" : "password"}
+                type={showConfirmPassword ? "text" : "password"}
                 {...formik.getFieldProps("confirmPassword")}
-                className={`block w-full pl-10 pr-12 py-3 border rounded-xl bg-backgroundSecondary text-textPrimary placeholder-textSecondary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all ${formik.touched.confirmPassword &&
-                  formik.errors.confirmPassword
+                className={`block w-full pl-10 pr-12 py-3 border rounded-xl bg-backgroundSecondary text-textPrimary placeholder-textSecondary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all ${formik.touched.confirmPassword && formik.errors.confirmPassword
                   ? "border-red-500"
                   : "border-borderPrimary"
                   }`}
-                placeholder="••••••••"
+                placeholder="Confirm Password"
               />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-textSecondary hover:text-textPrimary transition-colors"
+                tabIndex={-1}
+              >
+                {showConfirmPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <EyeIcon className="h-5 w-5" />
+                )}
+              </button>
             </div>
-            {formik.touched.confirmPassword && formik.errors.confirmPassword ? (
+            {formik.touched.password && formik.errors.password ? (
               <div className="text-red-500 text-xs mt-1">
-                {formik.errors.confirmPassword}
+                {formik.errors.password}
               </div>
             ) : null}
           </div>

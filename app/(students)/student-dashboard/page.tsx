@@ -10,10 +10,7 @@ import axiosInstance, { API_PATHS } from "@/lib/axios";
 import { Home, Search, Sparkles } from "lucide-react";
 import SmartRecommendation from "@/app/_components/student/SmartRecommendation";
 
-
-
-// Mock User Status
-const USER_HAS_BOARDING = true; // Toggle this to test
+// Removed mock constant
 
 const PRESET_UNIVERSITIES = [
   "University of Moratuwa",
@@ -31,6 +28,13 @@ export default function StudentDashboard() {
     API_PATHS.DASHBOARD.STUDENT,
     fetcher
   );
+
+  const { data: boardingStatus } = useSWR(
+    API_PATHS.DASHBOARD.BOARDING_STATUS,
+    fetcher
+  );
+
+  const hasBoarding = boardingStatus?.hasBoarding;
 
   const [showSmartRecommendation, setShowSmartRecommendation] = useState(false);
   const [filters, setFilters] = useState({
@@ -94,18 +98,16 @@ export default function StudentDashboard() {
         {/* AI Smart Recommendation Button */}
         <button
           onClick={() => setShowSmartRecommendation(true)}
-          className="group relative px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2"
+          className="group relative px-2 py-2 bg-primary hover:primary/80 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2"
         >
           <Sparkles className="w-5 h-5 group-hover:animate-pulse" />
           <span>AI Finder</span>
-          <div className="absolute -top-1 -right-1 px-2 py-0.5 bg-yellow-400 text-yellow-900 text-xs font-bold rounded-full animate-bounce">
-            NEW
-          </div>
+
         </button>
       </div>
 
       {/* User Boarding Status Banner */}
-      {USER_HAS_BOARDING && (
+      {hasBoarding && (
         <div className="bg-backgroundSecondary border border-borderPrimary rounded-2xl p-6 mb-10 shadow-lg text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transform transition hover:scale-[1.01] duration-300">
           <div className="flex items-center justify-center gap-4">
             <div className="p-3 bg-input rounded-full backdrop-blur-sm">
@@ -148,7 +150,7 @@ export default function StudentDashboard() {
         <BoardingCard boardings={filteredBoardings} />
       ) : (
         <div className="text-center py-20">
-          <div className="bg-white rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+          <div className="bg-backgroundSecondary rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
             <Search className="w-10 h-10 text-textPrimary" />
           </div>
           <h3 className="text-xl font-medium text-textPrimary">
@@ -159,7 +161,7 @@ export default function StudentDashboard() {
           </p>
         </div>
       )}
-      
+
       {/* Smart Recommendation Modal */}
       {showSmartRecommendation && (
         <SmartRecommendation

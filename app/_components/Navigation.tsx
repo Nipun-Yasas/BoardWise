@@ -170,10 +170,7 @@ export const Navigation = () => {
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
               className="fixed right-0 top-0 bottom-0 z-[1002] w-64 bg-backgroundSecondary border-l border-borderPrimary p-6 sm:hidden flex flex-col gap-6"
             >
-              <div className="flex items-center justify-between">
-                <span className="font-clash-display text-xl font-medium text-textPrimary">
-                  Menu
-                </span>
+              <div className="flex items-center justify-end">
                 <button
                   onClick={() => setMobileMenuOpen(false)}
                   className="p-2 text-textPrimary hover:bg-hoverPrimary rounded-full"
@@ -190,8 +187,8 @@ export const Navigation = () => {
                       <Link
                         href={href}
                         onClick={() => setMobileMenuOpen(false)}
-                        className={`block text-lg ${pathname === href
-                          ? "text-primary font-semibold"
+                        className={`block text-md ${pathname === href
+                          ? "text-primary"
                           : "text-textPrimary"
                           }`}
                       >

@@ -16,8 +16,12 @@ import BillingCard from "../../_components/boarding/BillingCard";
 import StayStatusIndicator from "../../_components/boarding/StayStatusIndicator";
 import BillingHistoryChart from "../../_components/boarding/BillingHistoryChart";
 import { Calendar } from "../../_components/boarding/Calendar";
+import { Hourglass } from 'ldrs/react'
+import 'ldrs/react/Hourglass.css'
+import { useTheme } from "next-themes";
 
 export default function BoardingPage() {
+    const { theme } = useTheme()
     const [loading, setLoading] = useState(true);
     const [statusData, setStatusData] = useState<any>(null);
     const [summaryData, setSummaryData] = useState<any>(null);
@@ -56,7 +60,7 @@ export default function BoardingPage() {
     if (loading && !statusData) {
         return (
             <div className="flex min-h-screen items-center justify-center">
-                <Loader2 className="animate-spin text-zinc-500" size={32} />
+                <Hourglass size="40" speed="1.4" color={theme === 'dark' ? 'white' : 'black'} />
             </div>
         );
     }

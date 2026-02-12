@@ -51,16 +51,16 @@ This repository now contains comprehensive documentation for creating a professi
 
 ## 🎯 Video Structure
 
-**Total Duration**: 11-13 minutes
+**Total Duration**: 5 minutes
 
-| Section | Duration | Focus |
+| Section || Focus |
 |---------|----------|-------|
-| Introduction | 0:45 | What is BoardWise |
-| Tech Overview | 0:45 | Technology & approach |
-| Student Features | 5:00 | Search, AI recommendations, billing |
-| Owner Features | 5:00 | Dashboard, management, analytics |
-| Additional Features | 0:30 | Dark mode, security |
-| Closing | 0:30 | Call to action |
+| Introduction || What is BoardWise |
+| Tech Overview | | Technology & approach |
+| Student Features | | Search, AI recommendations, billing |
+| Owner Features | | Dashboard, management, analytics |
+| Additional || Dark mode, security |
+| Closing || Call to action |
 
 ## 🌟 Key Features to Highlight
 

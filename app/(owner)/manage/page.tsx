@@ -2,13 +2,16 @@
 
 import BillingTab from "@/app/_components/manage/BillingTab";
 import GeneralInfoTab from "@/app/_components/manage/GeneralInfoTab";
-import RentTracker from "@/app/_components/manage/RentTracker";
+import RentTab from "@/app/_components/manage/RentTab";
 import RoomsTab from "@/app/_components/manage/RoomsTab";
 import axiosInstance, { API_PATHS } from "@/lib/axios";
-import { Box, CreditCard, Home } from "lucide-react";
+import { Box, CreditCard, Home, Wallet } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
+import { Hourglass } from 'ldrs/react'
+import 'ldrs/react/Hourglass.css'
+import { useTheme } from "next-themes";
 
 // Fetcher for SWR
 const fetcher = (url: string) => axiosInstance.get(url).then((res) => res.data);
@@ -53,19 +56,18 @@ interface RoomBill {
 }
 
 export default function Manage() {
+  const { resolvedTheme } = useTheme();
   const idCounterRef = React.useRef(1);
   const getNextId = () => String(idCounterRef.current++);
 
-  const [activeTab, setActiveTab] = useState<"general" | "rooms" | "billing">(
+  const [activeTab, setActiveTab] = useState<"general" | "rooms" | "billing" | "rent">(
     "general",
   );
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingRoomId, setSavingRoomId] = useState<string | null>(null);
-  const [rentTrackerBoardingId, setRentTrackerBoardingId] = useState<
-    string | null
-  >(null);
+
 
   const [boardings, setBoardings] = useState<Boarding[]>([]);
   const [selectedBoardingId, setSelectedBoardingId] = useState<string>("");
@@ -159,10 +161,7 @@ export default function Manage() {
   const refreshBoardings = () => mutateBoardings();
   const refreshBills = () => mutateBills();
 
-  const handleOpenRentTracker = (boardingId: string) => {
-    setRentTrackerBoardingId(boardingId);
-    setSelectedBoardingId(boardingId);
-  };
+
 
   // Add new boarding (creates temporary local boarding)
   const addBoarding = () => {
@@ -706,9 +705,12 @@ export default function Manage() {
   const renderTabContent = () => {
     if (loading) {
       return (
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
+        <div className="flex justify-center items-center h-full"><Hourglass
+            size="40"
+            bgOpacity="0.1"
+            speed="1.75"
+            color={resolvedTheme === "dark" ? "white" : "black"}
+        /></div>
       );
     }
 
@@ -726,7 +728,7 @@ export default function Manage() {
             addBoarding={addBoarding}
             saveBoardingDetails={saveBoardingDetails}
             saving={saving}
-            onOpenRentTracker={handleOpenRentTracker}
+
           />
         );
       case "rooms":
@@ -765,6 +767,16 @@ export default function Manage() {
             savingRoomId={savingRoomId}
           />
         );
+      case "rent":
+        return (
+          <RentTab
+            boardings={boardings}
+            selectedBoardingId={selectedBoardingId}
+            setSelectedBoardingId={setSelectedBoardingId}
+            selectedMonth={selectedMonth}
+            setSelectedMonth={setSelectedMonth}
+          />
+        );
       default:
         return null;
     }
@@ -787,15 +799,15 @@ export default function Manage() {
             { id: "general", label: "General Info", icon: <Home size={18} /> },
             { id: "rooms", label: "Rooms", icon: <Box size={18} /> },
             { id: "billing", label: "Billing", icon: <CreditCard size={18} /> },
+            { id: "rent", label: "Rent", icon: <Wallet size={18} /> },
           ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-t-lg font-medium transition-colors whitespace-nowrap ${
-                activeTab === tab.id
-                  ? "bg-backgroundSecondary text-primary"
-                  : "text-textSecondary hover:text-textPrimary hover:bg-backgroundSecondary/50"
-              }`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-t-lg font-medium transition-colors whitespace-nowrap ${activeTab === tab.id
+                ? "bg-backgroundSecondary text-primary"
+                : "text-textSecondary hover:text-textPrimary hover:bg-backgroundSecondary/50"
+                }`}
               suppressHydrationWarning
             >
               {tab.icon}
@@ -807,36 +819,7 @@ export default function Manage() {
         <div className="min-h-[500px]">{renderTabContent()}</div>
 
         {/* Rent Tracker Modal */}
-        {rentTrackerBoardingId && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 flex items-center justify-center p-4">
-            <div className="bg-background rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="flex justify-between items-center p-6 border-b border-borderPrimary sticky top-0 bg-backgroundSecondary">
-                <h2 className="text-xl font-semibold text-textPrimary">
-                  Rent Tracker -{" "}
-                  {boardings.find((b) => b.id === rentTrackerBoardingId)?.name}
-                </h2>
-                <button
-                  onClick={() => setRentTrackerBoardingId(null)}
-                  className="text-textSecondary hover:text-textPrimary transition-colors"
-                >
-                  ✕
-                </button>
-              </div>
-              <div className="p-6">
-                <RentTracker
-                  boardings={boardings}
-                  selectedBoardingId={rentTrackerBoardingId}
-                  rooms={
-                    boardings.find((b) => b.id === rentTrackerBoardingId)
-                      ?.rooms || []
-                  }
-                  selectedMonth={selectedMonth}
-                  setSelectedMonth={setSelectedMonth}
-                />
-              </div>
-            </div>
-          </div>
-        )}
+
       </div>
     </div>
   );

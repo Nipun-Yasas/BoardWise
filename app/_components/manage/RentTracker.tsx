@@ -25,7 +25,7 @@ interface Room {
   id: string;
   name: string;
   price: number;
-  tenants: any[];
+  tenants?: any[];
   capacity: number;
 }
 
@@ -73,7 +73,7 @@ const RentTracker: React.FC<RentTrackerProps> = ({
       setLoading(true);
       const response = await axiosInstance.get(API_PATHS.RENT_PAYMENT.GET_ALL(selectedRoomId, selectedMonth));
       const payments = response.data.rentPayments || [];
-      
+
       // If no payments exist, create them
       if (payments.length === 0) {
         await createRentPayments();
@@ -180,11 +180,10 @@ const RentTracker: React.FC<RentTrackerProps> = ({
               <div
                 key={room.id}
                 onClick={() => setSelectedRoomId(room.id)}
-                className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                  selectedRoomId === room.id
+                className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${selectedRoomId === room.id
                     ? "border-primary bg-primary/5"
                     : "border-borderPrimary hover:border-primary/50"
-                }`}
+                  }`}
               >
                 <h3 className="font-semibold text-textPrimary mb-2">
                   {room.name}
@@ -356,11 +355,10 @@ const RentTracker: React.FC<RentTrackerProps> = ({
                           </td>
                           <td className="py-3 px-4 text-center">
                             <span
-                              className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-                                payment.isPaid
+                              className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${payment.isPaid
                                   ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                                   : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                              }`}
+                                }`}
                             >
                               {payment.isPaid ? "Paid" : "Unpaid"}
                             </span>
@@ -374,11 +372,10 @@ const RentTracker: React.FC<RentTrackerProps> = ({
                                 )
                               }
                               disabled={updating === payment._id}
-                              className={`inline-flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                                payment.isPaid
+                              className={`inline-flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-medium transition-colors ${payment.isPaid
                                   ? "bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
                                   : "bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50"
-                              } disabled:opacity-50`}
+                                } disabled:opacity-50`}
                             >
                               {updating === payment._id ? (
                                 <>

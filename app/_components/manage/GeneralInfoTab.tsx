@@ -29,7 +29,7 @@ interface GeneralInfoTabProps {
   addBoarding: () => void;
   saveBoardingDetails: () => void;
   saving: boolean;
-  onOpenRentTracker?: (boardingId: string) => void;
+
 }
 
 const GeneralInfoTab: React.FC<GeneralInfoTabProps> = ({
@@ -43,7 +43,7 @@ const GeneralInfoTab: React.FC<GeneralInfoTabProps> = ({
   addBoarding,
   saveBoardingDetails,
   saving,
-  onOpenRentTracker,
+
 }) => {
   const detailsRef = React.useRef<HTMLDivElement>(null);
 
@@ -157,16 +157,7 @@ const GeneralInfoTab: React.FC<GeneralInfoTabProps> = ({
                   <p className="text-sm text-textSecondary truncate mb-3">
                     {boarding.description || "No description"}
                   </p>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onOpenRentTracker?.(boarding.id);
-                    }}
-                    className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors"
-                  >
-                    <Wallet size={14} />
-                    Rent Tracker
-                  </button>
+
                 </div>
               ))
           )}

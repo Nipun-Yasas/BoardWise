@@ -29,8 +29,37 @@ export async function POST(req: NextRequest) {
       expiresAt: new Date(Date.now() + 3600000), // 1 hour
     });
 
-    // Create reset URL
-    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${resetToken}`;
+    // Create reset URL - use environment variable or safely extract from request headers
+    // SECURITY: In production, NEXT_PUBLIC_APP_URL should always be set explicitly
+    let baseUrl = process.env.NEXT_PUBLIC_APP_URL;
+    
+    if (!baseUrl) {
+      console.warn('NEXT_PUBLIC_APP_URL not set. Using request headers as fallback. This should be set explicitly in production.');
+      
+      // Try to get from origin or referer header
+      const origin = req.headers.get('origin');
+      const referer = req.headers.get('referer');
+      
+      if (origin) {
+        baseUrl = origin;
+      } else if (referer) {
+        try {
+          // Safely extract origin from referer URL
+          const refererUrl = new URL(referer);
+          baseUrl = refererUrl.origin;
+        } catch (error) {
+          // Invalid referer URL, ignore and log for debugging
+          console.warn('Invalid referer URL:', referer, error);
+        }
+      }
+      
+      // Fallback to localhost for development
+      if (!baseUrl) {
+        baseUrl = 'http://localhost:3000';
+      }
+    }
+    
+    const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`;
 
     // Check if email credentials exist
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
